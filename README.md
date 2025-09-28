@@ -180,6 +180,21 @@ GET /api/research/{researchId}/notebook
 
 ## 配置说明
 
+### 环境变量
+- `AI_DASHSCOPE_API_KEY`: 阿里云DashScope API密钥
+- `DB_USERNAME`: MySQL用户名（默认：root）
+- `DB_PASSWORD`: MySQL密码（默认：mathagent123）
+- `DB_INIT_MODE`: 数据库初始化模式（默认：never）
+
+### 数据库初始化
+- **never**: 不自动初始化数据库（生产环境推荐）
+- **always**: 每次启动都执行初始化（开发环境推荐）
+- **embedded**: 仅在嵌入式数据库时初始化
+
+### 配置文件
+- `application-dev.yml`: 开发环境配置，自动初始化数据库
+- `application-prod.yml`: 生产环境配置，不自动初始化数据库
+
 ### 后端配置 (application.yml)
 
 ```yaml

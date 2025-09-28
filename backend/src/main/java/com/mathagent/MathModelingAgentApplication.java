@@ -11,7 +11,8 @@ import org.springframework.scheduling.annotation.EnableAsync;
 @EnableAsync
 public class MathModelingAgentApplication {
 
-    public static void main(String[] args) {
-        SpringApplication.run(MathModelingAgentApplication.class, args);
-    }
+	public static void main(String[] args) {
+		SpringApplication.run(MathModelingAgentApplication.class, args);
+	}
+
 }
