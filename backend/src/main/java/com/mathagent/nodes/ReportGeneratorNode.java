@@ -1,6 +1,6 @@
 package com.mathagent.nodes;
 
-import com.alibaba.cloud.ai.graph.NodeAction;
+import com.alibaba.cloud.ai.graph.action.NodeAction;
 import com.alibaba.cloud.ai.graph.OverAllState;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.messages.AssistantMessage;
@@ -13,7 +13,8 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 import java.util.Map;
 
-import static com.alibaba.cloud.ai.graph.constant.Constant.*;
+import static com.alibaba.cloud.ai.graph.StateGraph.END;
+import static com.alibaba.cloud.ai.graph.StateGraph.START;
 
 /**
  * 报告生成节点 生成完整的研究报告和可视化
@@ -26,7 +27,7 @@ public class ReportGeneratorNode implements NodeAction {
 	private ChatClient chatClient;
 
 	@Override
-	public OverAllState apply(OverAllState state) {
+	public Map<String, Object> apply(OverAllState state) {
 		log.info("开始执行报告生成节点...");
 
 		try {
@@ -40,25 +41,21 @@ public class ReportGeneratorNode implements NodeAction {
 
 			// 调用AI生成报告
 			Prompt prompt = new Prompt(List.of(new UserMessage(reportPrompt)));
-			AssistantMessage response = chatClient.prompt(prompt).call().content();
+			String response = chatClient.prompt(prompt).call().content();
 
 			// 生成最终报告
-			String finalReport = generateFinalReport(response.getContent(), problemAnalysis, collectedData,
+			String finalReport = generateFinalReport(response, problemAnalysis, collectedData,
 					modelDefinition, solutionResult);
 
-			// 更新状态
-			state.putValue(RESULT, finalReport);
-
 			log.info("报告生成完成");
+
+			return Map.of("result", finalReport);
 
 		}
 		catch (Exception e) {
 			log.error("报告生成节点执行失败", e);
-			state.put("error", "报告生成失败: " + e.getMessage());
-			state.put(RESULT, "报告生成失败，请检查错误信息");
+			return Map.of("error", "报告生成失败: " + e.getMessage(), "result", "报告生成失败，请检查错误信息");
 		}
-
-		return state;
 	}
 
 	private String buildReportPrompt(Map<String, Object> problemAnalysis, Map<String, Object> collectedData,

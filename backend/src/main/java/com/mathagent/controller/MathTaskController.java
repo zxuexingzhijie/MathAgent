@@ -17,7 +17,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import static com.alibaba.cloud.ai.graph.constant.Constant.*;
+import static com.alibaba.cloud.ai.graph.OverAllState.DEFAULT_INPUT_KEY;
 
 /**
  * 数学建模任务控制器 提供任务管理和执行API
@@ -166,7 +166,7 @@ public class MathTaskController {
 	private String executeGraphWorkflow(MathTask task) {
 		try {
 			// 构建输入状态
-			Map<String, Object> input = Map.of(INPUT_KEY, task.getProblemStatement(), "task_id", task.getId(),
+			Map<String, Object> input = Map.of(DEFAULT_INPUT_KEY, task.getProblemStatement(), "task_id", task.getId(),
 					"task_title", task.getTitle());
 
 			// 执行Graph工作流
@@ -174,7 +174,7 @@ public class MathTaskController {
 
 			if (result.isPresent()) {
 				OverAllState finalState = result.get();
-				String report = finalState.value(RESULT).get().toString();
+				String report = finalState.value("result").get().toString();
 
 				// 更新任务状态
 				task.setStatus(MathTask.TaskStatus.COMPLETED);
@@ -189,9 +189,11 @@ public class MathTaskController {
 					.status(TaskResult.NodeStatus.SUCCESS)
 					.outputData(report)
 					.build();
-				mathTaskService.saveTaskResult(task.getId(), "FINAL_REPORT", TaskResult.NodeStatus.SUCCESS, null, report, null);
+				mathTaskService.saveTaskResult(task.getId(), "FINAL_REPORT", TaskResult.NodeStatus.SUCCESS, null,
+						report, null);
 
-				mathTaskService.addTaskLog(task.getId(), "GRAPH_EXECUTOR", TaskLog.LogLevel.INFO, "Graph工作流执行完成", report);
+				mathTaskService.addTaskLog(task.getId(), "GRAPH_EXECUTOR", TaskLog.LogLevel.INFO, "Graph工作流执行完成",
+						report);
 
 				return "execution_" + System.currentTimeMillis();
 			}
@@ -208,7 +210,8 @@ public class MathTaskController {
 			task.setCompletedAt(LocalDateTime.now());
 			mathTaskService.updateTask(task);
 
-			mathTaskService.addTaskLog(task.getId(), "GRAPH_EXECUTOR", TaskLog.LogLevel.ERROR, "Graph工作流执行失败: " + e.getMessage(), null);
+			mathTaskService.addTaskLog(task.getId(), "GRAPH_EXECUTOR", TaskLog.LogLevel.ERROR,
+					"Graph工作流执行失败: " + e.getMessage(), null);
 
 			throw e;
 		}

@@ -1,6 +1,6 @@
 package com.mathagent.nodes;
 
-import com.alibaba.cloud.ai.graph.NodeAction;
+import com.alibaba.cloud.ai.graph.action.NodeAction;
 import com.alibaba.cloud.ai.graph.OverAllState;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.messages.AssistantMessage;
@@ -28,7 +28,7 @@ public class ModelBuilderNode implements NodeAction {
 	private ObjectMapper objectMapper;
 
 	@Override
-	public OverAllState apply(OverAllState state) {
+	public Map<String, Object> apply(OverAllState state) {
 		log.info("开始执行模型构建节点...");
 
 		try {
@@ -40,23 +40,20 @@ public class ModelBuilderNode implements NodeAction {
 
 			// 调用AI进行模型构建
 			Prompt prompt = new Prompt(List.of(new UserMessage(modelPrompt)));
-			AssistantMessage response = chatClient.prompt(prompt).call().content();
+			String response = chatClient.prompt(prompt).call().content();
 
 			// 解析模型定义
-			Map<String, Object> modelDefinition = parseModelDefinition(response.getContent());
-
-			// 更新状态
-			state.put("model_definition", modelDefinition);
+			Map<String, Object> modelDefinition = parseModelDefinition(response);
 
 			log.info("模型构建完成: {}", modelDefinition.get("model_name"));
+
+			return Map.of("model_definition", modelDefinition);
 
 		}
 		catch (Exception e) {
 			log.error("模型构建节点执行失败", e);
-			state.put("error", "模型构建失败: " + e.getMessage());
+			return Map.of("error", "模型构建失败: " + e.getMessage());
 		}
-
-		return state;
 	}
 
 	private String buildModelPrompt(Map<String, Object> problemAnalysis, Map<String, Object> collectedData) {

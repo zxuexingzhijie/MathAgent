@@ -1,7 +1,9 @@
 package com.mathagent.config;
 
-import com.alibaba.cloud.ai.dashscope.DashScopeChatModel;
-import com.alibaba.cloud.ai.dashscope.DashScopeEmbeddingModel;
+import com.alibaba.cloud.ai.dashscope.api.DashScopeApi;
+import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatModel;
+import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatOptions;
+import com.alibaba.cloud.ai.dashscope.embedding.DashScopeEmbeddingModel;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -22,13 +24,21 @@ public class AIConfig {
 	private String embeddingModel;
 
 	@Bean
-	public DashScopeChatModel dashScopeChatModel() {
-		return DashScopeChatModel.builder().apiKey(apiKey).model(chatModel).build();
+	public DashScopeApi dashScopeApi() {
+		return DashScopeApi.builder().apiKey(apiKey).build();
 	}
 
 	@Bean
-	public DashScopeEmbeddingModel dashScopeEmbeddingModel() {
-		return DashScopeEmbeddingModel.builder().apiKey(apiKey).model(embeddingModel).build();
+	public DashScopeChatModel dashScopeChatModel(DashScopeApi dashScopeApi) {
+		return DashScopeChatModel.builder()
+			.dashScopeApi(dashScopeApi)
+			.defaultOptions(DashScopeChatOptions.builder().withModel(chatModel).build())
+			.build();
+	}
+
+	@Bean
+	public DashScopeEmbeddingModel dashScopeEmbeddingModel(DashScopeApi dashScopeApi) {
+		return new DashScopeEmbeddingModel(dashScopeApi);
 	}
 
 }

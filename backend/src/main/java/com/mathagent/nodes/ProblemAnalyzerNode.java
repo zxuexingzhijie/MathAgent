@@ -11,9 +11,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.Map;
 
-import static com.alibaba.cloud.ai.graph.constant.Constant.*;
+import static com.alibaba.cloud.ai.graph.OverAllState.DEFAULT_INPUT_KEY;
 
 /**
  * 问题分析节点 分析数学建模问题，提取关键信息和要求
@@ -29,34 +30,31 @@ public class ProblemAnalyzerNode implements NodeAction {
 	private ObjectMapper objectMapper;
 
 	@Override
-	public OverAllState apply(OverAllState state) {
+	public Map<String, Object> apply(OverAllState state) {
 		log.info("开始执行问题分析节点...");
 
 		try {
-			String problemStatement = state.value(INPUT_KEY).get().toString();
+			String problemStatement = state.value(DEFAULT_INPUT_KEY).get().toString();
 
 			// 构建分析提示
 			String analysisPrompt = buildAnalysisPrompt(problemStatement);
 
 			// 调用AI进行分析
 			Prompt prompt = new Prompt(List.of(new UserMessage(analysisPrompt)));
-			AssistantMessage response = chatClient.prompt(prompt).call().content();
+			String response = chatClient.prompt(prompt).call().content();
 
 			// 解析分析结果
-			Map<String, Object> analysisResult = parseAnalysisResult(response.getContent());
-
-			// 更新状态
-			state.put("problem_analysis", analysisResult);
+			Map<String, Object> analysisResult = parseAnalysisResult(response);
 
 			log.info("问题分析完成: {}", analysisResult.get("summary"));
+
+			return Map.of("problem_analysis", analysisResult);
 
 		}
 		catch (Exception e) {
 			log.error("问题分析节点执行失败", e);
-			state.put("error", "问题分析失败: " + e.getMessage());
+			return Map.of("error", "问题分析失败: " + e.getMessage());
 		}
-
-		return state;
 	}
 
 	private String buildAnalysisPrompt(String problemStatement) {

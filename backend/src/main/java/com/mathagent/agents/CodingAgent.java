@@ -47,11 +47,9 @@ public class CodingAgent implements NodeAction {
 
 			// 创建代码执行会话
 			CodeInterpreterService.JupyterSession session = codeInterpreterService.createSession(taskId);
-			state.value("code_session_id", session.getSessionId());
 
 			// 生成代码
 			String code = generateCode(modelingResult);
-			state.value("generated_code", code);
 
 			// 执行代码
 			CodeInterpreterService.CodeExecutionResult result = codeInterpreterService
@@ -59,25 +57,25 @@ public class CodingAgent implements NodeAction {
 
 			// 处理执行结果
 			Map<String, Object> codingResult = processExecutionResult(result, code);
-			state.value("coding_result", codingResult);
 
 			// 如果执行失败，尝试调试
 			if (!result.isSuccess()) {
 				String debugCode = debugCode(code, result.getError());
 				CodeInterpreterService.CodeExecutionResult debugResult = codeInterpreterService
 					.executeCode(session.getSessionId(), debugCode, "python");
-				state.value("debug_result", processExecutionResult(debugResult, debugCode));
+				codingResult.put("debug_result", processExecutionResult(debugResult, debugCode));
 			}
 
 			log.info("代码手完成工作: {}", codingResult.get("summary"));
 
+			return Map.of("code_session_id", session.getSessionId(), "generated_code", code, "coding_result",
+					codingResult);
+
 		}
 		catch (Exception e) {
 			log.error("代码手工作失败", e);
-			state.value("error", "代码生成执行失败: " + e.getMessage());
+			return Map.of("error", "代码生成执行失败: " + e.getMessage());
 		}
-
-		return state.data();
 	}
 
 	private String generateCode(Map<String, Object> modelingResult) {
@@ -85,9 +83,9 @@ public class CodingAgent implements NodeAction {
 		String codingPrompt = promptService.getCodeGenerationPrompt(modelingResult);
 
 		Prompt prompt = new Prompt(List.of(new UserMessage(codingPrompt)));
-		AssistantMessage response = codingChatClient.prompt(prompt).call().content();
+		String response = codingChatClient.prompt(prompt).call().content();
 
-		return response.getContent();
+		return response;
 	}
 
 	private String debugCode(String originalCode, String error) {
@@ -95,9 +93,9 @@ public class CodingAgent implements NodeAction {
 		String debugPrompt = promptService.getCodeDebugPrompt(originalCode, error);
 
 		Prompt prompt = new Prompt(List.of(new UserMessage(debugPrompt)));
-		AssistantMessage response = codingChatClient.prompt(prompt).call().content();
+		String response = codingChatClient.prompt(prompt).call().content();
 
-		return response.getContent();
+		return response;
 	}
 
 	private Map<String, Object> processExecutionResult(CodeInterpreterService.CodeExecutionResult result, String code) {

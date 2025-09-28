@@ -232,3 +232,7 @@ tramp
 
 # Spring Boot
 spring-boot-starter-*.jar
+
+# Spring AI Alibaba modules
+spring-ai-alibaba-graph-core/
+spring-ai-alibaba-core/

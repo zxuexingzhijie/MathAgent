@@ -1,6 +1,6 @@
 package com.mathagent.nodes;
 
-import com.alibaba.cloud.ai.graph.NodeAction;
+import com.alibaba.cloud.ai.graph.action.NodeAction;
 import com.alibaba.cloud.ai.graph.OverAllState;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.messages.AssistantMessage;
@@ -28,7 +28,7 @@ public class SolverNode implements NodeAction {
 	private ObjectMapper objectMapper;
 
 	@Override
-	public OverAllState apply(OverAllState state) {
+	public Map<String, Object> apply(OverAllState state) {
 		log.info("开始执行求解器节点...");
 
 		try {
@@ -40,23 +40,20 @@ public class SolverNode implements NodeAction {
 
 			// 调用AI进行求解
 			Prompt prompt = new Prompt(List.of(new UserMessage(solvingPrompt)));
-			AssistantMessage response = chatClient.prompt(prompt).call().content();
+			String response = chatClient.prompt(prompt).call().content();
 
 			// 解析求解结果
-			Map<String, Object> solutionResult = parseSolutionResult(response.getContent());
-
-			// 更新状态
-			state.put("solution_result", solutionResult);
+			Map<String, Object> solutionResult = parseSolutionResult(response);
 
 			log.info("模型求解完成: {}", solutionResult.get("summary"));
+
+			return Map.of("solution_result", solutionResult);
 
 		}
 		catch (Exception e) {
 			log.error("求解器节点执行失败", e);
-			state.put("error", "模型求解失败: " + e.getMessage());
+			return Map.of("error", "模型求解失败: " + e.getMessage());
 		}
-
-		return state;
 	}
 
 	private String buildSolvingPrompt(Map<String, Object> problemAnalysis, Map<String, Object> modelDefinition) {

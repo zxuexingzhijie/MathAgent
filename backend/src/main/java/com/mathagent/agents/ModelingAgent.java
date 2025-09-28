@@ -4,7 +4,7 @@ import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.prompt.Prompt;
-import com.alibaba.cloud.ai.graph.NodeAction;
+import com.alibaba.cloud.ai.graph.action.NodeAction;
 import com.alibaba.cloud.ai.graph.OverAllState;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mathagent.service.PromptService;
@@ -34,7 +34,7 @@ public class ModelingAgent implements NodeAction {
 	private ObjectMapper objectMapper;
 
 	@Override
-	public OverAllState apply(OverAllState state) {
+	public Map<String, Object> apply(OverAllState state) {
 		log.info("建模手开始工作...");
 
 		try {
@@ -45,26 +45,21 @@ public class ModelingAgent implements NodeAction {
 
 			// 调用建模专用模型
 			Prompt prompt = new Prompt(List.of(new UserMessage(modelingPrompt)));
-			AssistantMessage response = modelingChatClient.prompt(prompt).call().content();
+			String response = modelingChatClient.prompt(prompt).call().content();
 
 			// 解析建模结果
-			Map<String, Object> modelingResult = parseModelingResult(response.getContent());
+			Map<String, Object> modelingResult = parseModelingResult(response);
 
-			// 更新状态
-			state.put("modeling_analysis", modelingResult);
-			state.put("model_definition", modelingResult.get("model_definition"));
-			state.put("variables", modelingResult.get("variables"));
-			state.put("constraints", modelingResult.get("constraints"));
-
-			log.info("建模手完成工作: {}", modelingResult.get("summary"));
+			// 返回建模结果
+			return Map.of("modeling_analysis", modelingResult, "model_definition",
+					modelingResult.get("model_definition"), "variables", modelingResult.get("variables"), "constraints",
+					modelingResult.get("constraints"));
 
 		}
 		catch (Exception e) {
 			log.error("建模手工作失败", e);
-			state.put("error", "建模分析失败: " + e.getMessage());
+			return Map.of("error", "建模分析失败: " + e.getMessage());
 		}
-
-		return state;
 	}
 
 	private Map<String, Object> parseModelingResult(String response) {

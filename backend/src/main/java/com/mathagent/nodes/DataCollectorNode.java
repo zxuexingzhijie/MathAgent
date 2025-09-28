@@ -1,6 +1,6 @@
 package com.mathagent.nodes;
 
-import com.alibaba.cloud.ai.graph.NodeAction;
+import com.alibaba.cloud.ai.graph.action.NodeAction;
 import com.alibaba.cloud.ai.graph.OverAllState;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.messages.AssistantMessage;
@@ -28,7 +28,7 @@ public class DataCollectorNode implements NodeAction {
 	private ObjectMapper objectMapper;
 
 	@Override
-	public OverAllState apply(OverAllState state) {
+	public Map<String, Object> apply(OverAllState state) {
 		log.info("开始执行数据收集节点...");
 
 		try {
@@ -39,23 +39,20 @@ public class DataCollectorNode implements NodeAction {
 
 			// 调用AI进行数据收集规划
 			Prompt prompt = new Prompt(List.of(new UserMessage(collectionPrompt)));
-			AssistantMessage response = chatClient.prompt(prompt).call().content();
+			String response = chatClient.prompt(prompt).call().content();
 
 			// 解析收集结果
-			Map<String, Object> collectionResult = parseCollectionResult(response.getContent());
-
-			// 更新状态
-			state.put("collected_data", collectionResult);
+			Map<String, Object> collectionResult = parseCollectionResult(response);
 
 			log.info("数据收集完成: {}", collectionResult.get("summary"));
+
+			return Map.of("collected_data", collectionResult);
 
 		}
 		catch (Exception e) {
 			log.error("数据收集节点执行失败", e);
-			state.put("error", "数据收集失败: " + e.getMessage());
+			return Map.of("error", "数据收集失败: " + e.getMessage());
 		}
-
-		return state;
 	}
 
 	private String buildCollectionPrompt(Map<String, Object> problemAnalysis) {

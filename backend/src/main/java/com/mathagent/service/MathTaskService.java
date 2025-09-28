@@ -18,6 +18,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
+import java.util.Optional;
 
 /**
  * 数学建模任务服务 使用MyBatis进行数据访问
@@ -46,7 +47,8 @@ public class MathTaskService {
 	public MathTask saveTask(MathTask task) {
 		if (task.getId() == null) {
 			return createTask(task);
-		} else {
+		}
+		else {
 			task.setUpdatedAt(LocalDateTime.now());
 			mathTaskMapper.update(task);
 			return task;
@@ -99,21 +101,22 @@ public class MathTaskService {
 			// 更新任务状态
 			updateTaskStatus(taskId, MathTask.TaskStatus.ANALYZING);
 
-		// 构建Graph状态
-		Map<String, Object> input = Map.of("input", task.getProblemStatement(), "task_id", taskId.toString());
+			// 构建Graph状态
+			Map<String, Object> input = Map.of("input", task.getProblemStatement(), "task_id", taskId.toString());
 
-		// 执行Graph工作流
-		Optional<OverAllState> result = compiledGraph.call(input);
+			// 执行Graph工作流
+			Optional<OverAllState> result = compiledGraph.call(input);
 
-		// 更新任务完成状态
-		if (result.isPresent()) {
-			updateTaskStatus(taskId, MathTask.TaskStatus.COMPLETED);
-			updateTaskCompletionTime(taskId);
-		} else {
-			updateTaskStatus(taskId, MathTask.TaskStatus.FAILED);
-		}
+			// 更新任务完成状态
+			if (result.isPresent()) {
+				updateTaskStatus(taskId, MathTask.TaskStatus.COMPLETED);
+				updateTaskCompletionTime(taskId);
+			}
+			else {
+				updateTaskStatus(taskId, MathTask.TaskStatus.FAILED);
+			}
 
-		log.info("任务执行完成: {}", taskId);
+			log.info("任务执行完成: {}", taskId);
 
 		}
 		catch (Exception e) {
