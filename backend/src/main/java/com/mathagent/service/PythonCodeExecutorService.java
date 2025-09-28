@@ -83,29 +83,28 @@ public class PythonCodeExecutorService {
 	/**
 	 * 获取会话的代码历史内容
 	 */
-	public String getCodeHistory(String sessionId) {
+	public String getCodeHistory(String sessionId) throws PythonExecutionException {
 		PythonSession session = sessions.get(sessionId);
 		if (session == null) {
-			throw new RuntimeException("会话不存在: " + sessionId);
+			throw new PythonExecutionException(sessionId, "", "会话不存在: " + sessionId);
 		}
 
 		try {
 			Path codePath = Paths.get(codeBasePath, session.getTaskId(), "code_history.json");
 			return Files.readString(codePath);
 		}
-		catch (Exception e) {
-			log.error("读取代码历史失败", e);
-			throw new RuntimeException("读取代码历史失败", e);
+		catch (IOException e) {
+			throw new PythonExecutionException(sessionId, "", "读取代码历史失败", e);
 		}
 	}
 
 	/**
 	 * 获取会话的所有代码单元格
 	 */
-	public List<CodeCell> getSessionCells(String sessionId) {
+	public List<CodeCell> getSessionCells(String sessionId) throws PythonExecutionException {
 		PythonSession session = sessions.get(sessionId);
 		if (session == null) {
-			throw new RuntimeException("会话不存在: " + sessionId);
+			throw new PythonExecutionException(sessionId, "", "会话不存在: " + sessionId);
 		}
 		return new ArrayList<>(session.getCells());
 	}

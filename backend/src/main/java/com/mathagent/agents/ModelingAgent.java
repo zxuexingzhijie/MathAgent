@@ -1,5 +1,7 @@
 package com.mathagent.agents;
 
+import com.mathagent.service.PromptService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.messages.UserMessage;
@@ -7,8 +9,8 @@ import org.springframework.ai.chat.prompt.Prompt;
 import com.alibaba.cloud.ai.graph.action.NodeAction;
 import com.alibaba.cloud.ai.graph.OverAllState;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.mathagent.service.PromptService;
-import lombok.extern.slf4j.Slf4j;
+import com.mathagent.exception.PromptProcessingException;
+import com.mathagent.util.ExceptionHandler;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
@@ -58,9 +60,11 @@ public class ModelingAgent implements NodeAction {
 					modelingResult.get("constraints"));
 
 		}
+		catch (PromptProcessingException e) {
+			return ExceptionHandler.handlePromptException("建模分析", e);
+		}
 		catch (Exception e) {
-			log.error("建模手工作失败", e);
-			return Map.of("error", "建模分析失败: " + e.getMessage());
+			return ExceptionHandler.handleAgentException("建模手", e);
 		}
 	}
 

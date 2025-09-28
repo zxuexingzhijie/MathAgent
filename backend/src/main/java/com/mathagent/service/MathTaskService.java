@@ -2,9 +2,11 @@ package com.mathagent.service;
 
 import com.alibaba.cloud.ai.graph.CompiledGraph;
 import com.alibaba.cloud.ai.graph.OverAllState;
+import com.mathagent.exception.TaskManagementException;
 import com.mathagent.mapper.MathTaskMapper;
-import com.mathagent.mapper.TaskResultMapper;
 import com.mathagent.mapper.TaskLogMapper;
+import com.mathagent.mapper.TaskResultMapper;
+import com.mathagent.util.ExceptionHandler;
 import com.mathagent.model.MathTask;
 import com.mathagent.model.TaskResult;
 import com.mathagent.model.TaskLog;
@@ -91,12 +93,12 @@ public class MathTaskService {
 	/**
 	 * 执行任务
 	 */
-	public void executeTask(Long taskId) {
+	public void executeTask(Long taskId) throws TaskManagementException {
 		log.info("开始执行任务: {}", taskId);
 
 		MathTask task = mathTaskMapper.selectById(taskId);
 		if (task == null) {
-			throw new RuntimeException("任务不存在: " + taskId);
+			throw new TaskManagementException(taskId, "任务不存在: " + taskId);
 		}
 
 		try {
@@ -125,7 +127,7 @@ public class MathTaskService {
 			log.error("任务执行失败: {}", taskId, e);
 			updateTaskStatus(taskId, MathTask.TaskStatus.FAILED);
 			addTaskLog(taskId, "SYSTEM", TaskLog.LogLevel.ERROR, "任务执行失败", e.getMessage());
-			throw new RuntimeException("任务执行失败", e);
+			throw new TaskManagementException(taskId, "任务执行失败", e);
 		}
 	}
 

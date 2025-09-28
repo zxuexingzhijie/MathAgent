@@ -1,8 +1,6 @@
 package com.mathagent.graph;
 
 import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatModel;
-import com.alibaba.cloud.ai.graph.observation.GraphObservationLifecycleListener;
-import com.alibaba.cloud.ai.graph.state.strategy.ReplaceStrategy;
 import org.springframework.ai.chat.client.ChatClient;
 import com.alibaba.cloud.ai.graph.KeyStrategyFactory;
 import com.alibaba.cloud.ai.graph.KeyStrategyFactoryBuilder;
@@ -14,16 +12,15 @@ import com.alibaba.cloud.ai.graph.exception.GraphStateException;
 import static com.alibaba.cloud.ai.graph.action.AsyncNodeAction.node_async;
 import static com.alibaba.cloud.ai.graph.StateGraph.END;
 import static com.alibaba.cloud.ai.graph.StateGraph.START;
-import com.mathagent.agents.*;
+import com.mathagent.agents.ModelingAgent;
+import com.mathagent.agents.CodingAgent;
+import com.mathagent.agents.WritingAgent;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.advisor.SimpleLoggerAdvisor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-
-import java.util.List;
-import java.util.Map;
 
 import static com.alibaba.cloud.ai.graph.OverAllState.DEFAULT_INPUT_KEY;
 

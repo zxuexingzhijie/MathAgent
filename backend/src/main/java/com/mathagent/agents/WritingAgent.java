@@ -1,12 +1,15 @@
 package com.mathagent.agents;
 
+import com.mathagent.exception.PromptProcessingException;
+import com.mathagent.service.PromptService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.prompt.Prompt;
 import com.alibaba.cloud.ai.graph.action.NodeAction;
 import com.alibaba.cloud.ai.graph.OverAllState;
-import com.mathagent.service.PromptService;
-import lombok.extern.slf4j.Slf4j;
+import com.mathagent.exception.PromptProcessingException;
+import com.mathagent.util.ExceptionHandler;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
@@ -61,14 +64,16 @@ public class WritingAgent implements NodeAction {
 					abstractContent, "paper_keywords", keywords, "writing_result", writingResult);
 
 		}
+		catch (PromptProcessingException e) {
+			return ExceptionHandler.handlePromptException("论文生成", e);
+		}
 		catch (Exception e) {
-			log.error("论文手工作失败", e);
-			return Map.of("error", "论文生成失败: " + e.getMessage());
+			return ExceptionHandler.handleAgentException("论文手", e);
 		}
 	}
 
 	private String generatePaper(String problemStatement, Map<String, Object> modelingResult,
-			Map<String, Object> codingResult) {
+			Map<String, Object> codingResult) throws PromptProcessingException {
 		// 使用提示词服务构建论文生成提示
 		String writingPrompt = promptService.getPaperGenerationPrompt(problemStatement, modelingResult, codingResult);
 
@@ -78,7 +83,7 @@ public class WritingAgent implements NodeAction {
 		return response;
 	}
 
-	private String formatPaper(String paper) {
+	private String formatPaper(String paper) throws PromptProcessingException {
 		// 使用提示词服务构建论文格式化提示
 		String formatPrompt = promptService.getPaperFormattingPrompt(paper);
 
@@ -89,7 +94,7 @@ public class WritingAgent implements NodeAction {
 	}
 
 	private String generateAbstract(String problemStatement, Map<String, Object> modelingResult,
-			Map<String, Object> codingResult) {
+			Map<String, Object> codingResult) throws PromptProcessingException {
 		// 使用提示词服务构建摘要生成提示
 		String abstractPrompt = promptService.getAbstractGenerationPrompt(problemStatement, modelingResult,
 				codingResult);
@@ -100,7 +105,7 @@ public class WritingAgent implements NodeAction {
 		return response;
 	}
 
-	private String generateKeywords(Map<String, Object> modelingResult) {
+	private String generateKeywords(Map<String, Object> modelingResult) throws PromptProcessingException {
 		// 使用提示词服务构建关键词生成提示
 		String keywordsPrompt = promptService.getKeywordsGenerationPrompt(modelingResult);
 

@@ -1,5 +1,6 @@
 package com.mathagent.agents;
 
+import com.mathagent.exception.PromptProcessingException;
 import com.mathagent.service.PromptService;
 import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.messages.UserMessage;
@@ -77,6 +78,9 @@ public class CodingAgent implements NodeAction {
 					codingResult);
 
 		}
+		catch (PromptProcessingException e) {
+			return ExceptionHandler.handlePromptException("代码生成", e);
+		}
 		catch (PythonExecutionException e) {
 			return ExceptionHandler.handlePythonException(e.getSessionId(), e.getCode(), e);
 		}
@@ -85,7 +89,7 @@ public class CodingAgent implements NodeAction {
 		}
 	}
 
-	private String generateCode(Map<String, Object> modelingResult) {
+	private String generateCode(Map<String, Object> modelingResult) throws PromptProcessingException {
 		// 使用提示词服务构建代码生成提示
 		String codingPrompt = promptService.getCodeGenerationPrompt(modelingResult);
 
@@ -95,7 +99,7 @@ public class CodingAgent implements NodeAction {
 		return response;
 	}
 
-	private String debugCode(String originalCode, String error) {
+	private String debugCode(String originalCode, String error) throws PromptProcessingException {
 		// 使用提示词服务构建代码调试提示
 		String debugPrompt = promptService.getCodeDebugPrompt(originalCode, error);
 

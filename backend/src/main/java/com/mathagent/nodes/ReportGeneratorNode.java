@@ -2,10 +2,12 @@ package com.mathagent.nodes;
 
 import com.alibaba.cloud.ai.graph.action.NodeAction;
 import com.alibaba.cloud.ai.graph.OverAllState;
+import com.mathagent.service.PromptService;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.prompt.Prompt;
-import com.mathagent.service.PromptService;
+import com.mathagent.exception.PromptProcessingException;
+import com.mathagent.util.ExceptionHandler;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -58,9 +60,11 @@ public class ReportGeneratorNode implements NodeAction {
 			return Map.of("result", finalReport);
 
 		}
+		catch (PromptProcessingException e) {
+			return ExceptionHandler.handlePromptException("报告生成", e);
+		}
 		catch (Exception e) {
-			log.error("报告生成节点执行失败", e);
-			return Map.of("error", "报告生成失败: " + e.getMessage(), "result", "报告生成失败，请检查错误信息");
+			return ExceptionHandler.handleGenericException("报告生成", e);
 		}
 	}
 

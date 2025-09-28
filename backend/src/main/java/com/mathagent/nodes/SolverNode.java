@@ -2,12 +2,14 @@ package com.mathagent.nodes;
 
 import com.alibaba.cloud.ai.graph.action.NodeAction;
 import com.alibaba.cloud.ai.graph.OverAllState;
+import com.mathagent.service.PromptService;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.prompt.Prompt;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.mathagent.service.PromptService;
+import com.mathagent.exception.PromptProcessingException;
+import com.mathagent.util.ExceptionHandler;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -56,9 +58,11 @@ public class SolverNode implements NodeAction {
 			return Map.of("solution_result", solutionResult);
 
 		}
+		catch (PromptProcessingException e) {
+			return ExceptionHandler.handlePromptException("模型求解", e);
+		}
 		catch (Exception e) {
-			log.error("求解器节点执行失败", e);
-			return Map.of("error", "模型求解失败: " + e.getMessage());
+			return ExceptionHandler.handleGenericException("模型求解", e);
 		}
 	}
 

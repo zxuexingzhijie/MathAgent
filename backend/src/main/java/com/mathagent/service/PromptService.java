@@ -1,5 +1,6 @@
 package com.mathagent.service;
 
+import com.mathagent.exception.PromptProcessingException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
@@ -32,7 +33,7 @@ public class PromptService {
 	/**
 	 * 初始化提示词模板
 	 */
-	public synchronized void initialize() {
+	public synchronized void initialize() throws PromptProcessingException {
 		if (initialized) {
 			return;
 		}
@@ -47,8 +48,7 @@ public class PromptService {
 			log.info("提示词模板加载完成，共加载 {} 个模板", promptTemplates.size());
 		}
 		catch (IOException e) {
-			log.error("加载提示词文件失败", e);
-			throw new RuntimeException("加载提示词文件失败", e);
+			throw new PromptProcessingException("", "加载提示词文件失败", e);
 		}
 	}
 
@@ -112,15 +112,18 @@ public class PromptService {
 	/**
 	 * 获取提示词模板
 	 */
-	public String getPromptTemplate(String promptName) {
+	public String getPromptTemplate(String promptName) throws PromptProcessingException {
 		if (!initialized) {
-			initialize();
+			try {
+				initialize();
+			} catch (PromptProcessingException e) {
+				throw e;
+			}
 		}
 
 		String template = promptTemplates.get(promptName);
 		if (template == null) {
-			log.warn("未找到提示词模板: {}", promptName);
-			throw new RuntimeException("未找到提示词模板: " + promptName);
+			throw new PromptProcessingException(promptName, "未找到提示词模板: " + promptName);
 		}
 
 		return template;
@@ -129,7 +132,7 @@ public class PromptService {
 	/**
 	 * 构建提示词
 	 */
-	public String buildPrompt(String promptName, Map<String, Object> variables) {
+	public String buildPrompt(String promptName, Map<String, Object> variables) throws PromptProcessingException {
 		String template = getPromptTemplate(promptName);
 		return replaceVariables(template, variables);
 	}
@@ -154,7 +157,7 @@ public class PromptService {
 	/**
 	 * 获取建模手问题分析提示词
 	 */
-	public String getModelingAnalysisPrompt(String problemStatement) {
+	public String getModelingAnalysisPrompt(String problemStatement) throws PromptProcessingException {
 		Map<String, Object> variables = new HashMap<>();
 		variables.put("problemStatement", problemStatement);
 		return buildPrompt("modeling.问题分析提示词", variables);
@@ -163,7 +166,7 @@ public class PromptService {
 	/**
 	 * 获取模型验证提示词
 	 */
-	public String getModelValidationPrompt(String modelDefinition) {
+	public String getModelValidationPrompt(String modelDefinition) throws PromptProcessingException {
 		Map<String, Object> variables = new HashMap<>();
 		variables.put("modelDefinition", modelDefinition);
 		return buildPrompt("modeling.模型验证提示词", variables);
@@ -172,7 +175,7 @@ public class PromptService {
 	/**
 	 * 获取复杂度评估提示词
 	 */
-	public String getComplexityAssessmentPrompt(String problemStatement) {
+	public String getComplexityAssessmentPrompt(String problemStatement) throws PromptProcessingException {
 		Map<String, Object> variables = new HashMap<>();
 		variables.put("problemStatement", problemStatement);
 		return buildPrompt("modeling.复杂度评估提示词", variables);
@@ -183,7 +186,7 @@ public class PromptService {
 	/**
 	 * 获取代码生成提示词
 	 */
-	public String getCodeGenerationPrompt(Object modelingResult) {
+	public String getCodeGenerationPrompt(Object modelingResult) throws PromptProcessingException {
 		Map<String, Object> variables = new HashMap<>();
 		variables.put("modelingResult", modelingResult);
 		return buildPrompt("coding.代码生成提示词", variables);
@@ -192,7 +195,7 @@ public class PromptService {
 	/**
 	 * 获取代码调试提示词
 	 */
-	public String getCodeDebugPrompt(String originalCode, String error) {
+	public String getCodeDebugPrompt(String originalCode, String error) throws PromptProcessingException {
 		Map<String, Object> variables = new HashMap<>();
 		variables.put("originalCode", originalCode);
 		variables.put("error", error);
@@ -202,7 +205,7 @@ public class PromptService {
 	/**
 	 * 获取代码优化提示词
 	 */
-	public String getCodeOptimizationPrompt(String originalCode) {
+	public String getCodeOptimizationPrompt(String originalCode) throws PromptProcessingException {
 		Map<String, Object> variables = new HashMap<>();
 		variables.put("originalCode", originalCode);
 		return buildPrompt("coding.代码优化提示词", variables);
@@ -211,7 +214,7 @@ public class PromptService {
 	/**
 	 * 获取算法实现提示词
 	 */
-	public String getAlgorithmImplementationPrompt(String algorithmDescription) {
+	public String getAlgorithmImplementationPrompt(String algorithmDescription) throws PromptProcessingException {
 		Map<String, Object> variables = new HashMap<>();
 		variables.put("algorithmDescription", algorithmDescription);
 		return buildPrompt("coding.算法实现提示词", variables);
@@ -220,7 +223,7 @@ public class PromptService {
 	/**
 	 * 获取可视化代码提示词
 	 */
-	public String getVisualizationCodePrompt(String dataDescription) {
+	public String getVisualizationCodePrompt(String dataDescription) throws PromptProcessingException {
 		Map<String, Object> variables = new HashMap<>();
 		variables.put("dataDescription", dataDescription);
 		return buildPrompt("coding.可视化代码提示词", variables);
@@ -231,7 +234,7 @@ public class PromptService {
 	/**
 	 * 获取论文生成提示词
 	 */
-	public String getPaperGenerationPrompt(String problemStatement, Object modelingResult, Object codingResult) {
+	public String getPaperGenerationPrompt(String problemStatement, Object modelingResult, Object codingResult) throws PromptProcessingException {
 		Map<String, Object> variables = new HashMap<>();
 		variables.put("problemStatement", problemStatement);
 		variables.put("modelingResult", modelingResult);
@@ -242,7 +245,7 @@ public class PromptService {
 	/**
 	 * 获取论文格式化提示词
 	 */
-	public String getPaperFormattingPrompt(String paper) {
+	public String getPaperFormattingPrompt(String paper) throws PromptProcessingException {
 		Map<String, Object> variables = new HashMap<>();
 		variables.put("paper", paper);
 		return buildPrompt("writing.论文格式化提示词", variables);
@@ -251,7 +254,7 @@ public class PromptService {
 	/**
 	 * 获取摘要生成提示词
 	 */
-	public String getAbstractGenerationPrompt(String problemStatement, Object modelingResult, Object codingResult) {
+	public String getAbstractGenerationPrompt(String problemStatement, Object modelingResult, Object codingResult) throws PromptProcessingException {
 		Map<String, Object> variables = new HashMap<>();
 		variables.put("problemStatement", problemStatement);
 		variables.put("modelingResult", modelingResult);
@@ -262,7 +265,7 @@ public class PromptService {
 	/**
 	 * 获取关键词生成提示词
 	 */
-	public String getKeywordsGenerationPrompt(Object modelingResult) {
+	public String getKeywordsGenerationPrompt(Object modelingResult) throws PromptProcessingException {
 		Map<String, Object> variables = new HashMap<>();
 		variables.put("modelingResult", modelingResult);
 		return buildPrompt("writing.关键词生成提示词", variables);
@@ -271,7 +274,7 @@ public class PromptService {
 	/**
 	 * 获取引言撰写提示词
 	 */
-	public String getIntroductionPrompt(String researchTopic, String problemBackground) {
+	public String getIntroductionPrompt(String researchTopic, String problemBackground) throws PromptProcessingException {
 		Map<String, Object> variables = new HashMap<>();
 		variables.put("researchTopic", researchTopic);
 		variables.put("problemBackground", problemBackground);
@@ -281,7 +284,7 @@ public class PromptService {
 	/**
 	 * 获取结论撰写提示词
 	 */
-	public String getConclusionPrompt(Object researchResults, Object modelEvaluation) {
+	public String getConclusionPrompt(Object researchResults, Object modelEvaluation) throws PromptProcessingException {
 		Map<String, Object> variables = new HashMap<>();
 		variables.put("researchResults", researchResults);
 		variables.put("modelEvaluation", modelEvaluation);
@@ -293,7 +296,7 @@ public class PromptService {
 	/**
 	 * 获取错误处理提示词
 	 */
-	public String getErrorHandlingPrompt(String error, String context) {
+	public String getErrorHandlingPrompt(String error, String context) throws PromptProcessingException {
 		Map<String, Object> variables = new HashMap<>();
 		variables.put("error", error);
 		variables.put("context", context);
@@ -303,7 +306,7 @@ public class PromptService {
 	/**
 	 * 获取结果验证提示词
 	 */
-	public String getResultValidationPrompt(Object result) {
+	public String getResultValidationPrompt(Object result) throws PromptProcessingException {
 		Map<String, Object> variables = new HashMap<>();
 		variables.put("result", result);
 		return buildPrompt("common.结果验证提示词", variables);
@@ -312,7 +315,7 @@ public class PromptService {
 	/**
 	 * 获取质量评估提示词
 	 */
-	public String getQualityAssessmentPrompt(Object workContent) {
+	public String getQualityAssessmentPrompt(Object workContent) throws PromptProcessingException {
 		Map<String, Object> variables = new HashMap<>();
 		variables.put("workContent", workContent);
 		return buildPrompt("common.质量评估提示词", variables);
@@ -321,7 +324,7 @@ public class PromptService {
 	/**
 	 * 获取优化建议提示词
 	 */
-	public String getOptimizationSuggestionPrompt(Object currentContent, String optimizationGoal) {
+	public String getOptimizationSuggestionPrompt(Object currentContent, String optimizationGoal) throws PromptProcessingException {
 		Map<String, Object> variables = new HashMap<>();
 		variables.put("currentContent", currentContent);
 		variables.put("optimizationGoal", optimizationGoal);
@@ -331,7 +334,7 @@ public class PromptService {
 	/**
 	 * 获取总结生成提示词
 	 */
-	public String getSummaryGenerationPrompt(Object originalContent) {
+	public String getSummaryGenerationPrompt(Object originalContent) throws PromptProcessingException {
 		Map<String, Object> variables = new HashMap<>();
 		variables.put("originalContent", originalContent);
 		return buildPrompt("common.总结生成提示词", variables);
@@ -340,7 +343,7 @@ public class PromptService {
 	/**
 	 * 获取格式转换提示词
 	 */
-	public String getFormatConversionPrompt(Object originalContent, String targetFormat) {
+	public String getFormatConversionPrompt(Object originalContent, String targetFormat) throws PromptProcessingException {
 		Map<String, Object> variables = new HashMap<>();
 		variables.put("originalContent", originalContent);
 		variables.put("targetFormat", targetFormat);
@@ -350,7 +353,7 @@ public class PromptService {
 	/**
 	 * 重新加载提示词
 	 */
-	public void reloadPrompts() {
+	public void reloadPrompts() throws PromptProcessingException {
 		initialized = false;
 		promptTemplates.clear();
 		initialize();
@@ -360,7 +363,7 @@ public class PromptService {
 	/**
 	 * 获取所有提示词名称
 	 */
-	public Map<String, String> getAllPromptTemplates() {
+	public Map<String, String> getAllPromptTemplates() throws PromptProcessingException {
 		if (!initialized) {
 			initialize();
 		}
@@ -370,7 +373,7 @@ public class PromptService {
 	/**
 	 * 获取指定Agent的提示词
 	 */
-	public Map<String, String> getAgentPrompts(String agentName) {
+	public Map<String, String> getAgentPrompts(String agentName) throws PromptProcessingException {
 		if (!initialized) {
 			initialize();
 		}
@@ -393,7 +396,7 @@ public class PromptService {
 	/**
 	 * 获取数据收集提示词
 	 */
-	public String getDataCollectionPrompt(Map<String, Object> problemAnalysis) {
+	public String getDataCollectionPrompt(Map<String, Object> problemAnalysis) throws PromptProcessingException {
 		Map<String, Object> variables = new HashMap<>();
 		variables.put("problemAnalysis", problemAnalysis);
 		return buildPrompt("nodes.数据收集提示词", variables);
@@ -402,7 +405,7 @@ public class PromptService {
 	/**
 	 * 获取模型构建提示词
 	 */
-	public String getModelBuildingPrompt(Map<String, Object> problemAnalysis, Map<String, Object> collectedData) {
+	public String getModelBuildingPrompt(Map<String, Object> problemAnalysis, Map<String, Object> collectedData) throws PromptProcessingException {
 		Map<String, Object> variables = new HashMap<>();
 		variables.put("problemAnalysis", problemAnalysis);
 		variables.put("collectedData", collectedData);
@@ -412,7 +415,7 @@ public class PromptService {
 	/**
 	 * 获取模型求解提示词
 	 */
-	public String getModelSolvingPrompt(Map<String, Object> problemAnalysis, Map<String, Object> modelDefinition) {
+	public String getModelSolvingPrompt(Map<String, Object> problemAnalysis, Map<String, Object> modelDefinition) throws PromptProcessingException {
 		Map<String, Object> variables = new HashMap<>();
 		variables.put("problemAnalysis", problemAnalysis);
 		variables.put("modelDefinition", modelDefinition);

@@ -2,9 +2,12 @@ package com.mathagent.controller;
 
 import com.alibaba.cloud.ai.graph.CompiledGraph;
 import com.alibaba.cloud.ai.graph.OverAllState;
+import com.mathagent.exception.TaskManagementException;
+import com.mathagent.exception.GraphWorkflowException;
 import com.mathagent.model.MathTask;
-import com.mathagent.model.TaskResult;
 import com.mathagent.model.TaskLog;
+import com.mathagent.model.TaskResult;
+import com.mathagent.util.ExceptionHandler;
 import com.mathagent.service.MathTaskService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -70,7 +73,7 @@ public class MathTaskController {
 		try {
 			MathTask task = mathTaskService.getTaskById(taskId);
 			if (task == null) {
-				throw new RuntimeException("任务不存在");
+				throw new TaskManagementException(taskId, "任务不存在");
 			}
 
 			// 更新任务状态
@@ -91,9 +94,11 @@ public class MathTaskController {
 					task.getStatus().name(), "message", "任务执行已开始"));
 
 		}
+		catch (TaskManagementException e) {
+			return ResponseEntity.badRequest().body(ExceptionHandler.handleTaskException(taskId, e));
+		}
 		catch (Exception e) {
-			log.error("执行任务失败", e);
-			return ResponseEntity.badRequest().body(Map.of("error", "执行任务失败: " + e.getMessage()));
+			return ResponseEntity.badRequest().body(ExceptionHandler.handleGenericException("执行任务", e));
 		}
 	}
 
@@ -144,7 +149,7 @@ public class MathTaskController {
 		try {
 			MathTask task = mathTaskService.getTaskById(taskId);
 			if (task == null) {
-				throw new RuntimeException("任务不存在");
+				throw new TaskManagementException(taskId, "任务不存在");
 			}
 
 			task.setStatus(MathTask.TaskStatus.CANCELLED);
@@ -156,16 +161,20 @@ public class MathTaskController {
 			return ResponseEntity.ok(Map.of("taskId", taskId, "status", task.getStatus().name(), "message", "任务已取消"));
 
 		}
+		catch (TaskManagementException e) {
+			return ResponseEntity.badRequest().body(ExceptionHandler.handleTaskException(taskId, e));
+		}
 		catch (Exception e) {
-			log.error("取消任务失败", e);
-			return ResponseEntity.badRequest().body(Map.of("error", "取消任务失败: " + e.getMessage()));
+			return ResponseEntity.badRequest().body(ExceptionHandler.handleGenericException("取消任务", e));
 		}
 	}
 
 	/**
 	 * 执行Graph工作流
 	 */
-	private String executeGraphWorkflow(MathTask task) {
+	private String executeGraphWorkflow(MathTask task) throws GraphWorkflowException {
+		String executionId = "execution_" + System.currentTimeMillis();
+		
 		try {
 			// 构建输入状态
 			Map<String, Object> input = Map.of(DEFAULT_INPUT_KEY, task.getProblemStatement(), "task_id", task.getId(),
@@ -197,12 +206,15 @@ public class MathTaskController {
 				mathTaskService.addTaskLog(task.getId(), "GRAPH_EXECUTOR", TaskLog.LogLevel.INFO, "Graph工作流执行完成",
 						report);
 
-				return "execution_" + System.currentTimeMillis();
+				return executionId;
 			}
 			else {
-				throw new RuntimeException("Graph工作流执行失败");
+				throw new GraphWorkflowException("FINAL_REPORT", executionId, "Graph工作流执行失败");
 			}
 
+		}
+		catch (GraphWorkflowException e) {
+			throw e;
 		}
 		catch (Exception e) {
 			log.error("Graph工作流执行失败", e);
@@ -215,7 +227,7 @@ public class MathTaskController {
 			mathTaskService.addTaskLog(task.getId(), "GRAPH_EXECUTOR", TaskLog.LogLevel.ERROR,
 					"Graph工作流执行失败: " + e.getMessage(), null);
 
-			throw e;
+			throw new GraphWorkflowException("GRAPH_EXECUTOR", executionId, "Graph工作流执行失败", e);
 		}
 	}
 
