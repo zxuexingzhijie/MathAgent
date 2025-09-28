@@ -1,0 +1,15 @@
+# 开发环境配置
+spring:
+  profiles:
+    active: dev
+  
+  # 数据库初始化配置
+  sql:
+    init:
+      mode: always  # 开发环境自动初始化数据库
+      
+  # 日志配置
+  logging:
+    level:
+      com.mathagent: DEBUG
+      org.springframework.jdbc: DEBUG

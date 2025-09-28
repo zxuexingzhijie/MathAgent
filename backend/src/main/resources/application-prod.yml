@@ -1,0 +1,15 @@
+# 生产环境配置
+spring:
+  profiles:
+    active: prod
+  
+  # 数据库初始化配置
+  sql:
+    init:
+      mode: never  # 生产环境不自动初始化数据库
+      
+  # 日志配置
+  logging:
+    level:
+      com.mathagent: INFO
+      org.springframework.jdbc: WARN

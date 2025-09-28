@@ -25,7 +25,7 @@ import java.util.Map;
 public class CodingAgent implements NodeAction {
 
 	@Autowired
-	@Qualifier("codingChatModel")
+	@Qualifier("codingChatClient")
 	private ChatClient codingChatClient;
 
 	@Autowired

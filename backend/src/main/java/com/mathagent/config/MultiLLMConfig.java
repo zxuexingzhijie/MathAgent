@@ -80,14 +80,6 @@ public class MultiLLMConfig {
 	}
 
 	/**
-	 * 嵌入模型
-	 */
-	@Bean
-	public DashScopeEmbeddingModel dashScopeEmbeddingModel(DashScopeApi dashScopeApi) {
-		return new DashScopeEmbeddingModel(dashScopeApi);
-	}
-
-	/**
 	 * 建模手专用ChatClient
 	 */
 	@Bean("modelingChatClient")

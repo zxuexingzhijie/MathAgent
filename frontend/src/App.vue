@@ -111,6 +111,12 @@ import { useTaskStore } from '@/stores/taskStore'
 import NewResearchForm from '@/components/NewResearchForm.vue'
 import SettingsPanel from '@/components/SettingsPanel.vue'
 import dayjs from 'dayjs'
+import relativeTime from 'dayjs/plugin/relativeTime'
+import 'dayjs/locale/zh-cn'
+
+// 配置dayjs
+dayjs.extend(relativeTime)
+dayjs.locale('zh-cn')
 
 const router = useRouter()
 const route = useRoute()

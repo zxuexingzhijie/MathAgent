@@ -21,7 +21,7 @@ import java.util.Map;
 public class WritingAgent implements NodeAction {
 
 	@Autowired
-	@Qualifier("writingChatModel")
+	@Qualifier("writingChatClient")
 	private ChatClient writingChatClient;
 
 	@Autowired

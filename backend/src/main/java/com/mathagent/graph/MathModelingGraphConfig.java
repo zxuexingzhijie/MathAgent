@@ -35,6 +35,7 @@ import static com.alibaba.cloud.ai.graph.OverAllState.DEFAULT_INPUT_KEY;
 public class MathModelingGraphConfig {
 
 	@Autowired
+	@Qualifier("dashScopeChatModel")
 	private DashScopeChatModel chatModel;
 
 	@Autowired
