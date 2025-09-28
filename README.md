@@ -2,6 +2,7 @@
 
 基于Spring AI Alibaba Graph框架和Vue.js的智能数学建模研究系统，集成Multi-Agents和Code Interpreter。
 
+![image](./image/系统架构图.png)
 ## 系统架构
 
 ### 后端技术栈
