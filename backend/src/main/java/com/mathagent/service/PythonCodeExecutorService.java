@@ -188,7 +188,6 @@ public class PythonCodeExecutorService {
 		// 添加必要的import和设置
 		StringBuilder fullCode = new StringBuilder();
 		fullCode.append("import sys\n");
-		fullCode.append("import os\n");
 		fullCode.append("import numpy as np\n");
 		fullCode.append("import matplotlib.pyplot as plt\n");
 		fullCode.append("import pandas as pd\n");

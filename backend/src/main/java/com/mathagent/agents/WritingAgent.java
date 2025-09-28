@@ -1,12 +1,10 @@
 package com.mathagent.agents;
 
 import org.springframework.ai.chat.client.ChatClient;
-import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.prompt.Prompt;
 import com.alibaba.cloud.ai.graph.action.NodeAction;
 import com.alibaba.cloud.ai.graph.OverAllState;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mathagent.service.PromptService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,10 +24,12 @@ import java.util.Map;
 public class WritingAgent implements NodeAction {
 
 	@Autowired
-	private PromptService promptService;
+	@Qualifier("writingChatClient")
+	private ChatClient writingChatClient;
 
 	@Autowired
-	private ObjectMapper objectMapper;
+	private PromptService promptService;
+
 
 	@Override
 	public Map<String, Object> apply(OverAllState state) {
