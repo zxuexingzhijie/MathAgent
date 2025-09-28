@@ -6,6 +6,8 @@ import org.springframework.scheduling.annotation.EnableAsync;
 
 /**
  * 数学建模DeepResearch Agent应用启动类
+ * 
+ * @author Makoto
  */
 @SpringBootApplication
 @EnableAsync

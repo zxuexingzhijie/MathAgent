@@ -22,6 +22,8 @@ import java.util.Optional;
 
 /**
  * 数学建模任务服务 使用MyBatis进行数据访问
+ * 
+ * @author Makoto
  */
 @Slf4j
 @Service

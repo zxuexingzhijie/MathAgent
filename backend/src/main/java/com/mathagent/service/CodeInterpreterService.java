@@ -11,11 +11,12 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Code Interpreter服务 基于Jupyter的代码执行环境
+ * 
+ * @author Makoto
  */
 @Slf4j
 @Service
@@ -24,8 +25,7 @@ public class CodeInterpreterService {
 	@Autowired
 	private ObjectMapper objectMapper;
 
-	private final Map<String, JupyterSession> sessions = new HashMap<>();
-
+	private final Map<String, JupyterSession> sessions = new ConcurrentHashMap<>();
 	private final String notebookBasePath = "notebooks";
 
 	/**
@@ -121,6 +121,7 @@ public class CodeInterpreterService {
 			log.info("清理Jupyter会话: {}", sessionId);
 		}
 	}
+
 
 	/**
 	 * 执行代码单元格

@@ -7,6 +7,7 @@ import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.prompt.Prompt;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.mathagent.service.PromptService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -16,6 +17,8 @@ import java.util.Map;
 
 /**
  * 数据收集节点 根据问题分析结果收集相关数据和文献
+ * 
+ * @author Makoto
  */
 @Slf4j
 @Component
@@ -27,6 +30,9 @@ public class DataCollectorNode implements NodeAction {
 	@Autowired
 	private ObjectMapper objectMapper;
 
+	@Autowired
+	private PromptService promptService;
+
 	@Override
 	public Map<String, Object> apply(OverAllState state) {
 		log.info("开始执行数据收集节点...");
@@ -34,8 +40,8 @@ public class DataCollectorNode implements NodeAction {
 		try {
 			Map<String, Object> problemAnalysis = (Map<String, Object>) state.value("problem_analysis").get();
 
-			// 构建数据收集提示
-			String collectionPrompt = buildCollectionPrompt(problemAnalysis);
+			// 使用PromptService构建数据收集提示
+			String collectionPrompt = promptService.getDataCollectionPrompt(problemAnalysis);
 
 			// 调用AI进行数据收集规划
 			Prompt prompt = new Prompt(List.of(new UserMessage(collectionPrompt)));
@@ -53,37 +59,6 @@ public class DataCollectorNode implements NodeAction {
 			log.error("数据收集节点执行失败", e);
 			return Map.of("error", "数据收集失败: " + e.getMessage());
 		}
-	}
-
-	private String buildCollectionPrompt(Map<String, Object> problemAnalysis) {
-		return String.format("""
-				基于以下问题分析结果，制定数据收集计划：
-
-				问题分析结果：
-				%s
-
-				请制定详细的数据收集计划，包括：
-				1. 需要收集的数据类型
-				2. 数据来源建议
-				3. 数据收集方法
-				4. 数据预处理需求
-				5. 数据质量要求
-				6. 数据存储格式
-				7. 数据验证方法
-				8. 收集优先级和时间安排
-
-				请以JSON格式返回收集计划，包含以下字段：
-				- data_types: 数据类型列表
-				- data_sources: 数据来源建议
-				- collection_methods: 收集方法
-				- preprocessing_needs: 预处理需求
-				- quality_requirements: 质量要求
-				- storage_format: 存储格式
-				- validation_methods: 验证方法
-				- priority_order: 优先级排序
-				- estimated_time: 预估时间
-				- summary: 收集计划摘要
-				""", problemAnalysis);
 	}
 
 	private Map<String, Object> parseCollectionResult(String response) {

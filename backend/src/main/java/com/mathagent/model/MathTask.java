@@ -6,10 +6,11 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
 /**
  * 数学建模任务实体 代表一个完整的数学建模研究任务
+ * 
+ * @author Makoto
  */
 @Data
 @NoArgsConstructor

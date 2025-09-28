@@ -13,6 +13,8 @@ import java.util.regex.Pattern;
 
 /**
  * 提示词管理服务 负责加载和管理Agent的提示词模板 支持多文件加载和分类管理
+ * 
+ * @author Makoto
  */
 @Slf4j
 @Service
@@ -20,7 +22,8 @@ public class PromptService {
 
 	// 提示词文件列表
 	private static final String[] PROMPT_FILES = { "prompts/modeling-agent-prompts.md",
-			"prompts/coding-agent-prompts.md", "prompts/writing-agent-prompts.md", "prompts/common-prompts.md" };
+			"prompts/coding-agent-prompts.md", "prompts/writing-agent-prompts.md", "prompts/common-prompts.md",
+			"prompts/nodes-prompts.md" };
 
 	private Map<String, String> promptTemplates = new HashMap<>();
 
@@ -77,14 +80,33 @@ public class PromptService {
 			String promptTemplate = matcher.group(2).trim();
 
 			// 添加文件前缀避免重名
-			String fullPromptName = fileName.contains("modeling") ? "modeling." + promptName
-					: fileName.contains("coding") ? "coding." + promptName
-							: fileName.contains("writing") ? "writing." + promptName
-									: fileName.contains("common") ? "common." + promptName : promptName;
+			String fullPromptName = buildPromptName(fileName, promptName);
 
 			promptTemplates.put(fullPromptName, promptTemplate);
 			log.debug("加载提示词: {} -> {}", fullPromptName, promptName);
 		}
+	}
+
+	/**
+	 * 构建提示词名称，消除复杂的条件链
+	 */
+	private String buildPromptName(String fileName, String promptName) {
+		if (fileName.contains("modeling")) {
+			return "modeling." + promptName;
+		}
+		if (fileName.contains("coding")) {
+			return "coding." + promptName;
+		}
+		if (fileName.contains("writing")) {
+			return "writing." + promptName;
+		}
+		if (fileName.contains("common")) {
+			return "common." + promptName;
+		}
+		if (fileName.contains("nodes")) {
+			return "nodes." + promptName;
+		}
+		return promptName;
 	}
 
 	/**
@@ -364,6 +386,37 @@ public class PromptService {
 		}
 
 		return agentPrompts;
+	}
+
+	// ========== Nodes包提示词 ==========
+
+	/**
+	 * 获取数据收集提示词
+	 */
+	public String getDataCollectionPrompt(Map<String, Object> problemAnalysis) {
+		Map<String, Object> variables = new HashMap<>();
+		variables.put("problemAnalysis", problemAnalysis);
+		return buildPrompt("nodes.数据收集提示词", variables);
+	}
+
+	/**
+	 * 获取模型构建提示词
+	 */
+	public String getModelBuildingPrompt(Map<String, Object> problemAnalysis, Map<String, Object> collectedData) {
+		Map<String, Object> variables = new HashMap<>();
+		variables.put("problemAnalysis", problemAnalysis);
+		variables.put("collectedData", collectedData);
+		return buildPrompt("nodes.模型构建提示词", variables);
+	}
+
+	/**
+	 * 获取模型求解提示词
+	 */
+	public String getModelSolvingPrompt(Map<String, Object> problemAnalysis, Map<String, Object> modelDefinition) {
+		Map<String, Object> variables = new HashMap<>();
+		variables.put("problemAnalysis", problemAnalysis);
+		variables.put("modelDefinition", modelDefinition);
+		return buildPrompt("nodes.模型求解提示词", variables);
 	}
 
 }

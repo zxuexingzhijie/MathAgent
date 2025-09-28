@@ -3,9 +3,9 @@ package com.mathagent.nodes;
 import com.alibaba.cloud.ai.graph.action.NodeAction;
 import com.alibaba.cloud.ai.graph.OverAllState;
 import org.springframework.ai.chat.client.ChatClient;
-import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.prompt.Prompt;
+import com.mathagent.service.PromptService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -13,11 +13,10 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 import java.util.Map;
 
-import static com.alibaba.cloud.ai.graph.StateGraph.END;
-import static com.alibaba.cloud.ai.graph.StateGraph.START;
-
 /**
  * 报告生成节点 生成完整的研究报告和可视化
+ * 
+ * @author Makoto
  */
 @Slf4j
 @Component
@@ -25,6 +24,9 @@ public class ReportGeneratorNode implements NodeAction {
 
 	@Autowired
 	private ChatClient chatClient;
+
+	@Autowired
+	private PromptService promptService;
 
 	@Override
 	public Map<String, Object> apply(OverAllState state) {
@@ -36,8 +38,12 @@ public class ReportGeneratorNode implements NodeAction {
 			Map<String, Object> modelDefinition = (Map<String, Object>) state.value("model_definition").get();
 			Map<String, Object> solutionResult = (Map<String, Object>) state.value("solution_result").get();
 
-			// 构建报告生成提示
-			String reportPrompt = buildReportPrompt(problemAnalysis, collectedData, modelDefinition, solutionResult);
+			// 使用WritingAgent的报告生成提示词
+			String reportPrompt = promptService.getPaperGenerationPrompt(
+				problemAnalysis.toString(), 
+				modelDefinition, 
+				solutionResult
+			);
 
 			// 调用AI生成报告
 			Prompt prompt = new Prompt(List.of(new UserMessage(reportPrompt)));
@@ -58,43 +64,6 @@ public class ReportGeneratorNode implements NodeAction {
 		}
 	}
 
-	private String buildReportPrompt(Map<String, Object> problemAnalysis, Map<String, Object> collectedData,
-			Map<String, Object> modelDefinition, Map<String, Object> solutionResult) {
-		return String.format("""
-				基于以下完整的数学建模过程，生成专业的研究报告：
-
-				问题分析结果：
-				%s
-
-				数据收集结果：
-				%s
-
-				模型定义：
-				%s
-
-				求解结果：
-				%s
-
-				请生成包含以下部分的完整报告：
-				1. 摘要（Executive Summary）
-				2. 问题描述和分析
-				3. 数据收集和处理
-				4. 模型构建
-				5. 求解过程和结果
-				6. 结果分析和解释
-				7. 敏感性分析
-				8. 结论和建议
-				9. 参考文献
-				10. 附录（代码、数据等）
-
-				报告要求：
-				- 结构清晰，逻辑严密
-				- 专业术语使用准确
-				- 包含必要的图表说明
-				- 提供可操作的建议
-				- 符合学术论文格式
-				""", problemAnalysis, collectedData, modelDefinition, solutionResult);
-	}
 
 	private String generateFinalReport(String aiReport, Map<String, Object> problemAnalysis,
 			Map<String, Object> collectedData, Map<String, Object> modelDefinition,

@@ -16,13 +16,14 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * 论文手Agent 专门负责学术论文撰写和格式化
+ * 
+ * @author Makoto
+ */
 @Slf4j
 @Component
 public class WritingAgent implements NodeAction {
-
-	@Autowired
-	@Qualifier("writingChatClient")
-	private ChatClient writingChatClient;
 
 	@Autowired
 	private PromptService promptService;

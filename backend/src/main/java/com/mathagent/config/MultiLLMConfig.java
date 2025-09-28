@@ -3,7 +3,6 @@ package com.mathagent.config;
 import com.alibaba.cloud.ai.dashscope.api.DashScopeApi;
 import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatModel;
 import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatOptions;
-import com.alibaba.cloud.ai.dashscope.embedding.DashScopeEmbeddingModel;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -12,12 +11,32 @@ import org.springframework.context.annotation.Configuration;
 
 /**
  * Multi-LLMs配置 为不同的Agent配置不同的模型
+ * 
+ * @author Makoto
  */
 @Configuration
 public class MultiLLMConfig {
 
 	@Value("${spring.ai.dashscope.api-key}")
 	private String apiKey;
+
+	// 模型配置常量
+	private static final String MODELING_MODEL = "qwen-max";
+	private static final String CODING_MODEL = "qwen-plus";
+	private static final String WRITING_MODEL = "qwen-max";
+	private static final String ANALYSIS_MODEL = "qwen-turbo";
+	
+	// 温度参数常量
+	private static final double MODELING_TEMPERATURE = 0.3;
+	private static final double CODING_TEMPERATURE = 0.5;
+	private static final double WRITING_TEMPERATURE = 0.7;
+	private static final double ANALYSIS_TEMPERATURE = 0.4;
+	
+	// Token限制常量
+	private static final int MODELING_MAX_TOKENS = 4000;
+	private static final int CODING_MAX_TOKENS = 6000;
+	private static final int WRITING_MAX_TOKENS = 8000;
+	private static final int ANALYSIS_MAX_TOKENS = 3000;
 
 	/**
 	 * 建模手专用模型 - 擅长数学建模和问题分析
@@ -27,9 +46,9 @@ public class MultiLLMConfig {
 		return DashScopeChatModel.builder()
 			.dashScopeApi(dashScopeApi)
 			.defaultOptions(DashScopeChatOptions.builder()
-				.withModel("qwen-max") // 使用最强模型进行建模
-				.withTemperature(0.3) // 低温度确保准确性
-                .withMaxToken(4000)
+				.withModel(MODELING_MODEL)
+				.withTemperature(MODELING_TEMPERATURE)
+				.withMaxToken(MODELING_MAX_TOKENS)
 				.build())
 			.build();
 	}
@@ -42,9 +61,9 @@ public class MultiLLMConfig {
 		return DashScopeChatModel.builder()
 			.dashScopeApi(dashScopeApi)
 			.defaultOptions(DashScopeChatOptions.builder()
-				.withModel("qwen-plus") // 使用平衡模型
-				.withTemperature(0.5) // 中等温度平衡创造性和准确性
-				.withMaxToken(6000) // 更多token用于代码
+				.withModel(CODING_MODEL)
+				.withTemperature(CODING_TEMPERATURE)
+				.withMaxToken(CODING_MAX_TOKENS)
 				.build())
 			.build();
 	}
@@ -57,9 +76,9 @@ public class MultiLLMConfig {
 		return DashScopeChatModel.builder()
 			.dashScopeApi(dashScopeApi)
 			.defaultOptions(DashScopeChatOptions.builder()
-				.withModel("qwen-max") // 使用最强模型进行写作
-				.withTemperature(0.7) // 较高温度增加创造性
-				.withMaxToken(8000) // 最多token用于长文本
+				.withModel(WRITING_MODEL)
+				.withTemperature(WRITING_TEMPERATURE)
+				.withMaxToken(WRITING_MAX_TOKENS)
 				.build())
 			.build();
 	}
@@ -72,9 +91,9 @@ public class MultiLLMConfig {
 		return DashScopeChatModel.builder()
 			.dashScopeApi(dashScopeApi)
 			.defaultOptions(DashScopeChatOptions.builder()
-				.withModel("qwen-turbo") // 使用快速模型
-				.withTemperature(0.4) // 较低温度确保分析准确性
-				.withMaxToken(3000)
+				.withModel(ANALYSIS_MODEL)
+				.withTemperature(ANALYSIS_TEMPERATURE)
+				.withMaxToken(ANALYSIS_MAX_TOKENS)
 				.build())
 			.build();
 	}

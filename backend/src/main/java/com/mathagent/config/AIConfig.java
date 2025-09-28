@@ -10,6 +10,8 @@ import org.springframework.context.annotation.Configuration;
 
 /**
  * Spring AI Alibaba配置 配置DashScope模型
+ * 
+ * @author Makoto
  */
 @Configuration
 public class AIConfig {

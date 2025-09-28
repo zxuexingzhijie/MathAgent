@@ -7,6 +7,7 @@ import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.prompt.Prompt;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.mathagent.service.PromptService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -18,6 +19,8 @@ import static com.alibaba.cloud.ai.graph.OverAllState.DEFAULT_INPUT_KEY;
 
 /**
  * 问题分析节点 分析数学建模问题，提取关键信息和要求
+ * 
+ * @author Makoto
  */
 @Slf4j
 @Component
@@ -29,6 +32,9 @@ public class ProblemAnalyzerNode implements NodeAction {
 	@Autowired
 	private ObjectMapper objectMapper;
 
+	@Autowired
+	private PromptService promptService;
+
 	@Override
 	public Map<String, Object> apply(OverAllState state) {
 		log.info("开始执行问题分析节点...");
@@ -36,8 +42,8 @@ public class ProblemAnalyzerNode implements NodeAction {
 		try {
 			String problemStatement = state.value(DEFAULT_INPUT_KEY).get().toString();
 
-			// 构建分析提示
-			String analysisPrompt = buildAnalysisPrompt(problemStatement);
+			// 使用ModelingAgent的问题分析提示词
+			String analysisPrompt = promptService.getModelingAnalysisPrompt(problemStatement);
 
 			// 调用AI进行分析
 			Prompt prompt = new Prompt(List.of(new UserMessage(analysisPrompt)));
@@ -55,36 +61,6 @@ public class ProblemAnalyzerNode implements NodeAction {
 			log.error("问题分析节点执行失败", e);
 			return Map.of("error", "问题分析失败: " + e.getMessage());
 		}
-	}
-
-	private String buildAnalysisPrompt(String problemStatement) {
-		return String.format("""
-				请分析以下数学建模问题，并提取关键信息：
-
-				问题描述：
-				%s
-
-				请从以下维度进行分析：
-				1. 问题类型（优化、预测、分类、仿真等）
-				2. 核心目标和要求
-				3. 已知条件和约束
-				4. 需要求解的未知量
-				5. 数据需求
-				6. 模型复杂度评估
-				7. 可能的建模方法
-				8. 预期输出格式
-
-				请以JSON格式返回分析结果，包含以下字段：
-				- problem_type: 问题类型
-				- objectives: 核心目标列表
-				- constraints: 约束条件列表
-				- unknowns: 待求解变量列表
-				- data_requirements: 数据需求
-				- complexity_level: 复杂度等级（低/中/高）
-				- suggested_methods: 建议的建模方法
-				- expected_outputs: 预期输出
-				- summary: 问题摘要
-				""", problemStatement);
 	}
 
 	private Map<String, Object> parseAnalysisResult(String response) {

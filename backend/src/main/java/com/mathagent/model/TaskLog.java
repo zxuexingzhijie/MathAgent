@@ -9,6 +9,8 @@ import java.time.LocalDateTime;
 
 /**
  * 任务日志实体 记录任务执行过程中的日志信息
+ * 
+ * @author Makoto
  */
 @Data
 @NoArgsConstructor

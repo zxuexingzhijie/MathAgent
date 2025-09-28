@@ -21,6 +21,8 @@ import static com.alibaba.cloud.ai.graph.OverAllState.DEFAULT_INPUT_KEY;
 
 /**
  * 数学建模任务控制器 提供任务管理和执行API
+ * 
+ * @author Makoto
  */
 @Slf4j
 @RestController
