@@ -1,13 +1,16 @@
 package com.mathagent.agents;
 
+import com.mathagent.service.PromptService;
 import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.prompt.Prompt;
 import com.alibaba.cloud.ai.graph.OverAllState;
 import com.alibaba.cloud.ai.graph.action.NodeAction;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.mathagent.exception.AgentExecutionException;
+import com.mathagent.exception.PythonExecutionException;
 import com.mathagent.service.PythonCodeExecutorService;
-import com.mathagent.service.PromptService;
+import com.mathagent.util.ExceptionHandler;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -74,9 +77,11 @@ public class CodingAgent implements NodeAction {
 					codingResult);
 
 		}
+		catch (PythonExecutionException e) {
+			return ExceptionHandler.handlePythonException(e.getSessionId(), e.getCode(), e);
+		}
 		catch (Exception e) {
-			log.error("代码手工作失败", e);
-			return Map.of("error", "代码生成执行失败: " + e.getMessage());
+			return ExceptionHandler.handleAgentException("代码手", e);
 		}
 	}
 

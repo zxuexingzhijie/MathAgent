@@ -1,6 +1,7 @@
 package com.mathagent.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.mathagent.exception.PythonExecutionException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -33,7 +34,7 @@ public class PythonCodeExecutorService {
 	/**
 	 * 创建新的Python执行会话
 	 */
-	public PythonSession createSession(String taskId) {
+	public PythonSession createSession(String taskId) throws PythonExecutionException {
 		try {
 			String sessionId = "session_" + taskId + "_" + System.currentTimeMillis();
 			PythonSession session = new PythonSession(sessionId, taskId);
@@ -45,19 +46,18 @@ public class PythonCodeExecutorService {
 			log.info("创建Python执行会话: {}", sessionId);
 			return session;
 		}
-		catch (Exception e) {
-			log.error("创建Python执行会话失败", e);
-			throw new RuntimeException("创建Python执行会话失败", e);
+		catch (IOException e) {
+			throw new PythonExecutionException("", "", "创建Python执行会话失败", e);
 		}
 	}
 
 	/**
 	 * 执行Python代码
 	 */
-	public CodeExecutionResult executeCode(String sessionId, String code, String language) {
+	public CodeExecutionResult executeCode(String sessionId, String code, String language) throws PythonExecutionException {
 		PythonSession session = sessions.get(sessionId);
 		if (session == null) {
-			throw new RuntimeException("会话不存在: " + sessionId);
+			throw new PythonExecutionException(sessionId, code, "会话不存在: " + sessionId);
 		}
 
 		try {
@@ -75,12 +75,8 @@ public class PythonCodeExecutorService {
 			log.info("代码执行完成: {}", sessionId);
 			return result;
 		}
-		catch (Exception e) {
-			log.error("代码执行失败", e);
-			CodeExecutionResult errorResult = new CodeExecutionResult();
-			errorResult.setSuccess(false);
-			errorResult.setError(e.getMessage());
-			return errorResult;
+		catch (IOException e) {
+			throw new PythonExecutionException(sessionId, code, "代码执行失败", e);
 		}
 	}
 
