@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import { taskApi } from '../services/api'
+import { taskApi } from '@/services/api'
 
 export const useTaskStore = defineStore('task', () => {
   // 状态
@@ -12,23 +12,27 @@ export const useTaskStore = defineStore('task', () => {
   // 计算属性
   const taskCount = computed(() => tasks.value.length)
   const completedTasks = computed(() => 
-    tasks.value.filter(task => task.status === 'completed')
+    tasks.value.filter(task => task.status === 'COMPLETED')
   )
   const runningTasks = computed(() => 
-    tasks.value.filter(task => task.status === 'running')
+    tasks.value.filter(task => 
+      ['ANALYZING', 'DATA_COLLECTING', 'MODEL_BUILDING', 'SOLVING', 'GENERATING_REPORT'].includes(task.status)
+    )
+  )
+  const failedTasks = computed(() => 
+    tasks.value.filter(task => task.status === 'FAILED')
   )
 
-  // 操作
-  const fetchTasks = async (params = {}) => {
+  // 动作
+  const loadTasks = async () => {
     loading.value = true
     error.value = null
-    
     try {
-      const response = await taskApi.getTasks(params)
+      const response = await taskApi.getTasks()
       tasks.value = response.data
     } catch (err) {
       error.value = err.message
-      console.error('获取任务列表失败:', err)
+      console.error('加载任务失败:', err)
     } finally {
       loading.value = false
     }
@@ -37,7 +41,6 @@ export const useTaskStore = defineStore('task', () => {
   const createTask = async (taskData) => {
     loading.value = true
     error.value = null
-    
     try {
       const response = await taskApi.createTask(taskData)
       const newTask = response.data
@@ -52,12 +55,53 @@ export const useTaskStore = defineStore('task', () => {
     }
   }
 
-  const fetchTask = async (taskId) => {
+  const executeTask = async (taskId) => {
     loading.value = true
     error.value = null
-    
     try {
-      const response = await taskApi.getTask(taskId)
+      const response = await taskApi.executeTask(taskId)
+      // 更新任务状态
+      const task = tasks.value.find(t => t.id === taskId)
+      if (task) {
+        task.status = 'ANALYZING'
+        task.startedAt = new Date().toISOString()
+      }
+      return response.data
+    } catch (err) {
+      error.value = err.message
+      console.error('执行任务失败:', err)
+      throw err
+    } finally {
+      loading.value = false
+    }
+  }
+
+  const cancelTask = async (taskId) => {
+    loading.value = true
+    error.value = null
+    try {
+      const response = await taskApi.cancelTask(taskId)
+      // 更新任务状态
+      const task = tasks.value.find(t => t.id === taskId)
+      if (task) {
+        task.status = 'CANCELLED'
+        task.completedAt = new Date().toISOString()
+      }
+      return response.data
+    } catch (err) {
+      error.value = err.message
+      console.error('取消任务失败:', err)
+      throw err
+    } finally {
+      loading.value = false
+    }
+  }
+
+  const getTaskDetail = async (taskId) => {
+    loading.value = true
+    error.value = null
+    try {
+      const response = await taskApi.getTaskDetail(taskId)
       currentTask.value = response.data
       return response.data
     } catch (err) {
@@ -69,92 +113,46 @@ export const useTaskStore = defineStore('task', () => {
     }
   }
 
-  const updateTask = async (taskId, updateData) => {
-    loading.value = true
-    error.value = null
-    
+  const getTaskResults = async (taskId) => {
     try {
-      const response = await taskApi.updateTask(taskId, updateData)
-      const updatedTask = response.data
-      
-      // 更新任务列表中的任务
-      const index = tasks.value.findIndex(task => task.id === taskId)
-      if (index !== -1) {
-        tasks.value[index] = updatedTask
-      }
-      
-      // 更新当前任务
-      if (currentTask.value && currentTask.value.id === taskId) {
-        currentTask.value = updatedTask
-      }
-      
-      return updatedTask
+      const response = await taskApi.getTaskResults(taskId)
+      return response.data
     } catch (err) {
-      error.value = err.message
-      console.error('更新任务失败:', err)
+      console.error('获取任务结果失败:', err)
       throw err
-    } finally {
-      loading.value = false
     }
   }
 
-  const cancelTask = async (taskId) => {
-    loading.value = true
-    error.value = null
-    
+  const getTaskLogs = async (taskId) => {
     try {
-      await taskApi.cancelTask(taskId)
-      
-      // 更新任务状态
-      const task = tasks.value.find(t => t.id === taskId)
-      if (task) {
-        task.status = 'cancelled'
-      }
-      
-      if (currentTask.value && currentTask.value.id === taskId) {
-        currentTask.value.status = 'cancelled'
-      }
+      const response = await taskApi.getTaskLogs(taskId)
+      return response.data
     } catch (err) {
-      error.value = err.message
-      console.error('取消任务失败:', err)
+      console.error('获取任务日志失败:', err)
       throw err
-    } finally {
-      loading.value = false
     }
   }
 
-  const deleteTask = async (taskId) => {
-    loading.value = true
-    error.value = null
-    
-    try {
-      await taskApi.deleteTask(taskId)
-      
-      // 从任务列表中移除
-      const index = tasks.value.findIndex(task => task.id === taskId)
-      if (index !== -1) {
-        tasks.value.splice(index, 1)
-      }
-      
-      // 清除当前任务
-      if (currentTask.value && currentTask.value.id === taskId) {
-        currentTask.value = null
-      }
-    } catch (err) {
-      error.value = err.message
-      console.error('删除任务失败:', err)
-      throw err
-    } finally {
-      loading.value = false
+  const addTask = (task) => {
+    tasks.value.unshift(task)
+  }
+
+  const updateTask = (updatedTask) => {
+    const index = tasks.value.findIndex(t => t.id === updatedTask.id)
+    if (index !== -1) {
+      tasks.value[index] = updatedTask
+    }
+  }
+
+  const removeTask = (taskId) => {
+    const index = tasks.value.findIndex(t => t.id === taskId)
+    if (index !== -1) {
+      tasks.value.splice(index, 1)
     }
   }
 
   const clearError = () => {
     error.value = null
-  }
-
-  const clearCurrentTask = () => {
-    currentTask.value = null
   }
 
   return {
@@ -168,15 +166,19 @@ export const useTaskStore = defineStore('task', () => {
     taskCount,
     completedTasks,
     runningTasks,
+    failedTasks,
     
-    // 操作
-    fetchTasks,
+    // 动作
+    loadTasks,
     createTask,
-    fetchTask,
-    updateTask,
+    executeTask,
     cancelTask,
-    deleteTask,
-    clearError,
-    clearCurrentTask
+    getTaskDetail,
+    getTaskResults,
+    getTaskLogs,
+    addTask,
+    updateTask,
+    removeTask,
+    clearError
   }
 })

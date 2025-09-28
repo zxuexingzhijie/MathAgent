@@ -1,300 +1,427 @@
 <template>
   <div class="home-view">
-    <!-- 欢迎区域 -->
-    <el-card class="welcome-card" shadow="hover">
-      <div class="welcome-content">
-        <div class="welcome-text">
-          <h1>欢迎使用 DeepResearchAgent</h1>
-          <p class="subtitle">数学建模深度研究助手</p>
-          <p class="description">
-            基于AI的智能数学建模平台，自动完成从问题分析到论文生成的完整流程，
-            让数学建模比赛变得更加高效和智能。
-          </p>
-        </div>
-        <div class="welcome-actions">
-          <el-button type="primary" size="large" @click="goToCreate">
-            <el-icon><Plus /></el-icon>
-            创建新任务
-          </el-button>
-          <el-button size="large" @click="goToTasks">
-            <el-icon><List /></el-icon>
-            查看任务列表
-          </el-button>
-        </div>
-      </div>
-    </el-card>
-
-    <!-- 功能特性 -->
-    <div class="features-section">
-      <h2>核心功能</h2>
-      <el-row :gutter="24">
-        <el-col :xs="24" :sm="12" :md="8" v-for="feature in features" :key="feature.title">
-          <el-card class="feature-card" shadow="hover">
-            <div class="feature-content">
-              <div class="feature-icon">
-                <el-icon :size="32" :color="feature.color">
-                  <component :is="feature.icon" />
-                </el-icon>
-              </div>
-              <h3>{{ feature.title }}</h3>
-              <p>{{ feature.description }}</p>
-            </div>
-          </el-card>
-        </el-col>
-      </el-row>
+    <!-- 页面标题 -->
+    <div class="page-header">
+      <h1>数学建模任务管理</h1>
+      <p>管理和监控您的数学建模研究任务</p>
     </div>
 
-    <!-- 快速开始 -->
-    <div class="quick-start-section">
-      <h2>快速开始</h2>
-      <el-card class="quick-start-card">
-        <el-steps :active="currentStep" finish-status="success">
-          <el-step title="输入问题" description="描述你的数学建模问题" />
-          <el-step title="自动分析" description="AI分析问题并制定解决方案" />
-          <el-step title="生成代码" description="自动生成Python代码" />
-          <el-step title="执行分析" description="运行代码并生成结果" />
-          <el-step title="撰写论文" description="自动生成完整论文" />
-        </el-steps>
-        
-        <div class="step-content">
-          <el-button type="primary" @click="startDemo">
-            <el-icon><PlayArrowFilled /></el-icon>
-            开始体验
-          </el-button>
-        </div>
-      </el-card>
-    </div>
-
-    <!-- 统计信息 -->
-    <div class="stats-section">
-      <h2>平台统计</h2>
-      <el-row :gutter="24">
-        <el-col :xs="12" :sm="6" v-for="stat in stats" :key="stat.label">
+    <!-- 统计卡片 -->
+    <div class="stats-cards">
+      <el-row :gutter="20">
+        <el-col :span="6">
           <el-card class="stat-card">
             <div class="stat-content">
-              <div class="stat-number">{{ stat.value }}</div>
-              <div class="stat-label">{{ stat.label }}</div>
+              <div class="stat-icon total">
+                <el-icon><Document /></el-icon>
+              </div>
+              <div class="stat-info">
+                <div class="stat-number">{{ taskStore.taskCount }}</div>
+                <div class="stat-label">总任务数</div>
+              </div>
+            </div>
+          </el-card>
+        </el-col>
+        <el-col :span="6">
+          <el-card class="stat-card">
+            <div class="stat-content">
+              <div class="stat-icon running">
+                <el-icon><Loading /></el-icon>
+              </div>
+              <div class="stat-info">
+                <div class="stat-number">{{ taskStore.runningTasks.length }}</div>
+                <div class="stat-label">执行中</div>
+              </div>
+            </div>
+          </el-card>
+        </el-col>
+        <el-col :span="6">
+          <el-card class="stat-card">
+            <div class="stat-content">
+              <div class="stat-icon completed">
+                <el-icon><Check /></el-icon>
+              </div>
+              <div class="stat-info">
+                <div class="stat-number">{{ taskStore.completedTasks.length }}</div>
+                <div class="stat-label">已完成</div>
+              </div>
+            </div>
+          </el-card>
+        </el-col>
+        <el-col :span="6">
+          <el-card class="stat-card">
+            <div class="stat-content">
+              <div class="stat-icon failed">
+                <el-icon><Close /></el-icon>
+              </div>
+              <div class="stat-info">
+                <div class="stat-number">{{ taskStore.failedTasks.length }}</div>
+                <div class="stat-label">失败</div>
+              </div>
             </div>
           </el-card>
         </el-col>
       </el-row>
     </div>
+
+    <!-- 任务列表 -->
+    <el-card class="task-list-card">
+      <template #header>
+        <div class="card-header">
+          <span>任务列表</span>
+          <div class="header-actions">
+            <el-button type="primary" @click="refreshTasks">
+              <el-icon><Refresh /></el-icon>
+              刷新
+            </el-button>
+            <el-button @click="createNewTask">
+              <el-icon><Plus /></el-icon>
+              新建任务
+            </el-button>
+          </div>
+        </div>
+      </template>
+
+      <!-- 加载状态 -->
+      <div v-if="taskStore.loading" class="loading-container">
+        <el-skeleton :rows="5" animated />
+      </div>
+
+      <!-- 任务表格 -->
+      <el-table
+        v-else
+        :data="taskStore.tasks"
+        style="width: 100%"
+        @row-click="handleRowClick"
+        class="task-table"
+      >
+        <el-table-column prop="id" label="ID" width="80" />
+        <el-table-column prop="title" label="任务标题" min-width="200" />
+        <el-table-column prop="type" label="类型" width="120">
+          <template #default="{ row }">
+            <el-tag :type="getTypeTagType(row.type)">
+              {{ getTypeLabel(row.type) }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column prop="status" label="状态" width="120">
+          <template #default="{ row }">
+            <el-tag :type="getStatusTagType(row.status)">
+              {{ getStatusLabel(row.status) }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column prop="createdAt" label="创建时间" width="180">
+          <template #default="{ row }">
+            {{ formatDate(row.createdAt) }}
+          </template>
+        </el-table-column>
+        <el-table-column prop="executionTimeMs" label="执行时间" width="120">
+          <template #default="{ row }">
+            {{ formatDuration(row.executionTimeMs) }}
+          </template>
+        </el-table-column>
+        <el-table-column label="操作" width="200" fixed="right">
+          <template #default="{ row }">
+            <el-button-group>
+              <el-button
+                size="small"
+                type="primary"
+                @click.stop="viewTask(row)"
+              >
+                查看
+              </el-button>
+              <el-button
+                v-if="canExecute(row.status)"
+                size="small"
+                type="success"
+                @click.stop="executeTask(row)"
+                :loading="executingTasks.has(row.id)"
+              >
+                执行
+              </el-button>
+              <el-button
+                v-if="canCancel(row.status)"
+                size="small"
+                type="warning"
+                @click.stop="cancelTask(row)"
+              >
+                取消
+              </el-button>
+            </el-button-group>
+          </template>
+        </el-table-column>
+      </el-table>
+
+      <!-- 空状态 -->
+      <div v-if="!taskStore.loading && taskStore.tasks.length === 0" class="empty-state">
+        <el-empty description="暂无任务">
+          <el-button type="primary" @click="createNewTask">
+            创建第一个任务
+          </el-button>
+        </el-empty>
+      </div>
+    </el-card>
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { useTaskStore } from '@/stores/taskStore'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import dayjs from 'dayjs'
 
 const router = useRouter()
-const currentStep = ref(0)
+const taskStore = useTaskStore()
 
-const features = [
-  {
-    title: '智能问题分析',
-    description: '自动解析数学建模题目，识别问题类型和约束条件',
-    icon: 'DataAnalysis',
-    color: '#409EFF'
-  },
-  {
-    title: '代码自动生成',
-    description: '基于问题分析自动生成Python代码，支持多种算法',
-    icon: 'Code',
-    color: '#67C23A'
-  },
-  {
-    title: '数据可视化',
-    description: '自动生成图表和可视化结果，直观展示分析过程',
-    icon: 'TrendCharts',
-    color: '#E6A23C'
-  },
-  {
-    title: '论文自动撰写',
-    description: '生成结构完整的数学建模论文，符合学术规范',
-    icon: 'Document',
-    color: '#F56C6C'
-  },
-  {
-    title: '实时进度跟踪',
-    description: 'WebSocket实时显示研究进度，随时了解处理状态',
-    icon: 'Timer',
-    color: '#909399'
-  },
-  {
-    title: '模块化设计',
-    description: '各Agent独立工作，易于扩展和维护',
-    icon: 'Grid',
-    color: '#9C27B0'
-  }
-]
+// 响应式数据
+const executingTasks = ref(new Set())
 
-const stats = [
-  { label: '总任务数', value: '128' },
-  { label: '已完成', value: '95' },
-  { label: '成功率', value: '94.2%' },
-  { label: '平均用时', value: '15分钟' }
-]
+// 方法
+const refreshTasks = async () => {
+  await taskStore.loadTasks()
+  ElMessage.success('任务列表已刷新')
+}
 
-const goToCreate = () => {
+const createNewTask = () => {
   router.push('/create')
 }
 
-const goToTasks = () => {
-  router.push('/tasks')
+const handleRowClick = (row) => {
+  viewTask(row)
 }
 
-const startDemo = () => {
-  // 模拟步骤进度
-  const interval = setInterval(() => {
-    currentStep.value++
-    if (currentStep.value >= 5) {
-      clearInterval(interval)
-      currentStep.value = 0
-    }
-  }, 1000)
+const viewTask = (task) => {
+  router.push(`/task/${task.id}`)
 }
+
+const executeTask = async (task) => {
+  try {
+    executingTasks.value.add(task.id)
+    await taskStore.executeTask(task.id)
+    ElMessage.success('任务执行已开始')
+  } catch (error) {
+    ElMessage.error('执行任务失败: ' + error.message)
+  } finally {
+    executingTasks.value.delete(task.id)
+  }
+}
+
+const cancelTask = async (task) => {
+  try {
+    await ElMessageBox.confirm(
+      '确定要取消这个任务吗？',
+      '确认取消',
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }
+    )
+    
+    await taskStore.cancelTask(task.id)
+    ElMessage.success('任务已取消')
+  } catch (error) {
+    if (error !== 'cancel') {
+      ElMessage.error('取消任务失败: ' + error.message)
+    }
+  }
+}
+
+// 工具方法
+const getTypeTagType = (type) => {
+  const typeMap = {
+    'OPTIMIZATION': 'success',
+    'PREDICTION': 'primary',
+    'CLASSIFICATION': 'info',
+    'SIMULATION': 'warning',
+    'STATISTICAL_ANALYSIS': 'danger',
+    'MACHINE_LEARNING': 'success',
+    'COMPLEX_SYSTEM': 'primary',
+    'OTHER': 'info'
+  }
+  return typeMap[type] || 'info'
+}
+
+const getTypeLabel = (type) => {
+  const labelMap = {
+    'OPTIMIZATION': '优化问题',
+    'PREDICTION': '预测问题',
+    'CLASSIFICATION': '分类问题',
+    'SIMULATION': '仿真问题',
+    'STATISTICAL_ANALYSIS': '统计分析',
+    'MACHINE_LEARNING': '机器学习',
+    'COMPLEX_SYSTEM': '复杂系统',
+    'OTHER': '其他'
+  }
+  return labelMap[type] || type
+}
+
+const getStatusTagType = (status) => {
+  const statusMap = {
+    'CREATED': 'info',
+    'ANALYZING': 'warning',
+    'DATA_COLLECTING': 'warning',
+    'MODEL_BUILDING': 'warning',
+    'SOLVING': 'warning',
+    'GENERATING_REPORT': 'warning',
+    'COMPLETED': 'success',
+    'FAILED': 'danger',
+    'CANCELLED': 'info'
+  }
+  return statusMap[status] || 'info'
+}
+
+const getStatusLabel = (status) => {
+  const labelMap = {
+    'CREATED': '已创建',
+    'ANALYZING': '分析中',
+    'DATA_COLLECTING': '数据收集中',
+    'MODEL_BUILDING': '模型构建中',
+    'SOLVING': '求解中',
+    'GENERATING_REPORT': '生成报告中',
+    'COMPLETED': '已完成',
+    'FAILED': '失败',
+    'CANCELLED': '已取消'
+  }
+  return labelMap[status] || status
+}
+
+const canExecute = (status) => {
+  return ['CREATED', 'FAILED'].includes(status)
+}
+
+const canCancel = (status) => {
+  return ['ANALYZING', 'DATA_COLLECTING', 'MODEL_BUILDING', 'SOLVING', 'GENERATING_REPORT'].includes(status)
+}
+
+const formatDate = (dateString) => {
+  return dayjs(dateString).format('YYYY-MM-DD HH:mm:ss')
+}
+
+const formatDuration = (ms) => {
+  if (!ms) return '-'
+  const seconds = Math.floor(ms / 1000)
+  const minutes = Math.floor(seconds / 60)
+  const hours = Math.floor(minutes / 60)
+  
+  if (hours > 0) {
+    return `${hours}h ${minutes % 60}m`
+  } else if (minutes > 0) {
+    return `${minutes}m ${seconds % 60}s`
+  } else {
+    return `${seconds}s`
+  }
+}
+
+// 生命周期
+onMounted(() => {
+  taskStore.loadTasks()
+})
 </script>
 
 <style lang="scss" scoped>
 .home-view {
-  max-width: 1200px;
-  margin: 0 auto;
-}
-
-.welcome-card {
-  margin-bottom: 40px;
-  
-  .welcome-content {
-    display: flex;
-    align-items: center;
-    gap: 40px;
-    
-    .welcome-text {
-      flex: 1;
-      
-      h1 {
-        font-size: 32px;
-        font-weight: bold;
-        margin: 0 0 8px 0;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-      }
-      
-      .subtitle {
-        font-size: 18px;
-        color: #666;
-        margin: 0 0 16px 0;
-      }
-      
-      .description {
-        font-size: 16px;
-        color: #666;
-        line-height: 1.6;
-        margin: 0;
-      }
-    }
-    
-    .welcome-actions {
-      display: flex;
-      gap: 16px;
-    }
-  }
-}
-
-.features-section {
-  margin-bottom: 40px;
-  
-  h2 {
-    text-align: center;
-    font-size: 28px;
-    margin-bottom: 32px;
-    color: #333;
-  }
-  
-  .feature-card {
-    height: 200px;
+  .page-header {
     margin-bottom: 24px;
     
-    .feature-content {
-      text-align: center;
-      padding: 20px;
-      
-      .feature-icon {
-        margin-bottom: 16px;
-      }
-      
-      h3 {
-        font-size: 18px;
-        margin: 0 0 12px 0;
-        color: #333;
-      }
-      
-      p {
-        font-size: 14px;
-        color: #666;
-        line-height: 1.5;
-        margin: 0;
-      }
+    h1 {
+      margin: 0 0 8px 0;
+      color: #303133;
+      font-size: 28px;
+      font-weight: 600;
     }
-  }
-}
-
-.quick-start-section {
-  margin-bottom: 40px;
-  
-  h2 {
-    text-align: center;
-    font-size: 28px;
-    margin-bottom: 32px;
-    color: #333;
-  }
-  
-  .quick-start-card {
-    .step-content {
-      text-align: center;
-      margin-top: 32px;
-    }
-  }
-}
-
-.stats-section {
-  h2 {
-    text-align: center;
-    font-size: 28px;
-    margin-bottom: 32px;
-    color: #333;
-  }
-  
-  .stat-card {
-    text-align: center;
     
-    .stat-content {
-      padding: 20px;
-      
-      .stat-number {
-        font-size: 32px;
-        font-weight: bold;
-        color: #409EFF;
-        margin-bottom: 8px;
-      }
-      
-      .stat-label {
-        font-size: 14px;
-        color: #666;
+    p {
+      margin: 0;
+      color: #606266;
+      font-size: 16px;
+    }
+  }
+
+  .stats-cards {
+    margin-bottom: 24px;
+    
+    .stat-card {
+      .stat-content {
+        display: flex;
+        align-items: center;
+        
+        .stat-icon {
+          width: 60px;
+          height: 60px;
+          border-radius: 12px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          margin-right: 16px;
+          font-size: 24px;
+          color: white;
+          
+          &.total {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          }
+          
+          &.running {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+          }
+          
+          &.completed {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+          }
+          
+          &.failed {
+            background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+          }
+        }
+        
+        .stat-info {
+          .stat-number {
+            font-size: 32px;
+            font-weight: bold;
+            color: #303133;
+            line-height: 1;
+            margin-bottom: 4px;
+          }
+          
+          .stat-label {
+            font-size: 14px;
+            color: #909399;
+          }
+        }
       }
     }
   }
-}
 
-@media (max-width: 768px) {
-  .welcome-content {
-    flex-direction: column;
-    text-align: center;
+  .task-list-card {
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      
+      .header-actions {
+        display: flex;
+        gap: 12px;
+      }
+    }
     
-    .welcome-actions {
-      justify-content: center;
+    .loading-container {
+      padding: 20px;
+    }
+    
+    .task-table {
+      .el-table__row {
+        cursor: pointer;
+        
+        &:hover {
+          background-color: #f5f7fa;
+        }
+      }
+    }
+    
+    .empty-state {
+      padding: 40px 0;
     }
   }
 }

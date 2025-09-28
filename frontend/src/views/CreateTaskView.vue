@@ -1,129 +1,148 @@
 <template>
   <div class="create-task-view">
-    <el-card class="create-card">
-      <template #header>
-        <div class="card-header">
-          <h2>创建新任务</h2>
-          <p>输入数学建模问题，AI将自动分析并生成解决方案</p>
-        </div>
-      </template>
+    <!-- 页面标题 -->
+    <div class="page-header">
+      <h1>创建数学建模任务</h1>
+      <p>输入问题描述，系统将自动分析并构建研究流程</p>
+    </div>
 
+    <!-- 创建表单 -->
+    <el-card class="form-card">
       <el-form
         ref="formRef"
         :model="form"
         :rules="rules"
         label-width="120px"
-        @submit.prevent="handleSubmit"
+        label-position="left"
       >
-        <el-form-item label="任务标题" prop="title">
-          <el-input
-            v-model="form.title"
-            placeholder="请输入任务标题"
-            maxlength="100"
-            show-word-limit
-          />
-        </el-form-item>
+        <!-- 基本信息 -->
+        <div class="form-section">
+          <h3>基本信息</h3>
+          
+          <el-form-item label="任务标题" prop="title">
+            <el-input
+              v-model="form.title"
+              placeholder="请输入任务标题"
+              maxlength="200"
+              show-word-limit
+            />
+          </el-form-item>
 
-        <el-form-item label="问题类型" prop="task_type">
-          <el-select v-model="form.task_type" placeholder="请选择问题类型">
-            <el-option label="数学建模" value="math_modeling" />
-            <el-option label="数据分析" value="data_analysis" />
-            <el-option label="优化问题" value="optimization" />
-            <el-option label="仿真模拟" value="simulation" />
-          </el-select>
-        </el-form-item>
+          <el-form-item label="任务类型" prop="type">
+            <el-select v-model="form.type" placeholder="请选择任务类型" style="width: 100%">
+              <el-option
+                v-for="type in taskTypes"
+                :key="type.value"
+                :label="type.label"
+                :value="type.value"
+              />
+            </el-select>
+          </el-form-item>
 
-        <el-form-item label="问题描述" prop="description">
-          <el-input
-            v-model="form.description"
-            type="textarea"
-            :rows="6"
-            placeholder="请详细描述你的数学建模问题，包括背景、目标、数据等信息"
-            maxlength="2000"
-            show-word-limit
-          />
-        </el-form-item>
+          <el-form-item label="任务描述" prop="description">
+            <el-input
+              v-model="form.description"
+              type="textarea"
+              :rows="3"
+              placeholder="请输入任务描述"
+              maxlength="500"
+              show-word-limit
+            />
+          </el-form-item>
+        </div>
 
-        <el-form-item label="约束条件">
-          <el-input
-            v-model="form.constraints"
-            type="textarea"
-            :rows="3"
-            placeholder="请描述问题的约束条件（可选）"
-            maxlength="500"
-            show-word-limit
-          />
-        </el-form-item>
+        <!-- 问题描述 -->
+        <div class="form-section">
+          <h3>问题描述</h3>
+          
+          <el-form-item label="问题陈述" prop="problemStatement">
+            <el-input
+              v-model="form.problemStatement"
+              type="textarea"
+              :rows="6"
+              placeholder="请详细描述数学建模问题，包括：&#10;1. 问题背景和目标&#10;2. 已知条件和约束&#10;3. 需要求解的内容&#10;4. 预期结果"
+              maxlength="2000"
+              show-word-limit
+            />
+          </el-form-item>
 
-        <el-form-item label="输入数据">
-          <el-input
-            v-model="form.input_data_text"
-            type="textarea"
-            :rows="4"
-            placeholder="请提供相关数据或数据描述（可选）"
-            maxlength="1000"
-            show-word-limit
-          />
-        </el-form-item>
+          <el-form-item label="研究目标" prop="researchGoals">
+            <el-input
+              v-model="form.researchGoals"
+              type="textarea"
+              :rows="3"
+              placeholder="请描述研究的具体目标和预期成果"
+              maxlength="1000"
+              show-word-limit
+            />
+          </el-form-item>
+        </div>
 
-        <el-form-item label="高级配置">
-          <el-collapse>
-            <el-collapse-item title="模型配置" name="model">
-              <el-form-item label="分析模型">
-                <el-select v-model="form.config.analysis_model" placeholder="选择分析模型">
-                  <el-option label="GPT-4" value="gpt-4" />
-                  <el-option label="GPT-3.5" value="gpt-3.5-turbo" />
-                  <el-option label="Claude-3" value="claude-3-sonnet-20240229" />
-                </el-select>
-              </el-form-item>
-              <el-form-item label="代码模型">
-                <el-select v-model="form.config.code_model" placeholder="选择代码模型">
-                  <el-option label="GPT-4" value="gpt-4" />
-                  <el-option label="GPT-3.5" value="gpt-3.5-turbo" />
-                  <el-option label="Claude-3" value="claude-3-sonnet-20240229" />
-                </el-select>
-              </el-form-item>
-              <el-form-item label="论文模型">
-                <el-select v-model="form.config.writing_model" placeholder="选择论文模型">
-                  <el-option label="GPT-4" value="gpt-4" />
-                  <el-option label="GPT-3.5" value="gpt-3.5-turbo" />
-                  <el-option label="Claude-3" value="claude-3-sonnet-20240229" />
-                </el-select>
-              </el-form-item>
-            </el-collapse-item>
-          </el-collapse>
-        </el-form-item>
+        <!-- 技术要求 -->
+        <div class="form-section">
+          <h3>技术要求</h3>
+          
+          <el-form-item label="数据需求" prop="dataRequirements">
+            <el-input
+              v-model="form.dataRequirements"
+              type="textarea"
+              :rows="3"
+              placeholder="请描述需要的数据类型、来源和格式要求"
+              maxlength="1000"
+              show-word-limit
+            />
+          </el-form-item>
 
-        <el-form-item>
-          <div class="form-actions">
-            <el-button @click="goBack">取消</el-button>
-            <el-button type="primary" @click="handleSubmit" :loading="loading">
-              <el-icon><Plus /></el-icon>
-              创建任务
-            </el-button>
-          </div>
-        </el-form-item>
+          <el-form-item label="模型约束" prop="modelConstraints">
+            <el-input
+              v-model="form.modelConstraints"
+              type="textarea"
+              :rows="3"
+              placeholder="请描述模型的约束条件、限制和特殊要求"
+              maxlength="1000"
+              show-word-limit
+            />
+          </el-form-item>
+
+          <el-form-item label="预期输出" prop="expectedOutputs">
+            <el-input
+              v-model="form.expectedOutputs"
+              type="textarea"
+              :rows="3"
+              placeholder="请描述期望的输出格式、报告内容和交付物"
+              maxlength="1000"
+              show-word-limit
+            />
+          </el-form-item>
+        </div>
+
+        <!-- 操作按钮 -->
+        <div class="form-actions">
+          <el-button @click="resetForm">重置</el-button>
+          <el-button type="primary" @click="submitForm" :loading="submitting">
+            创建任务
+          </el-button>
+        </div>
       </el-form>
     </el-card>
 
-    <!-- 示例问题 -->
-    <el-card class="examples-card" v-if="!form.title">
+    <!-- 预览卡片 -->
+    <el-card v-if="showPreview" class="preview-card">
       <template #header>
-        <h3>示例问题</h3>
+        <span>任务预览</span>
       </template>
       
-      <div class="examples">
-        <div 
-          v-for="example in examples" 
-          :key="example.title"
-          class="example-item"
-          @click="loadExample(example)"
-        >
-          <h4>{{ example.title }}</h4>
-          <p>{{ example.description }}</p>
-          <el-tag :type="getTaskTypeTag(example.task_type)">
-            {{ getTaskTypeLabel(example.task_type) }}
-          </el-tag>
+      <div class="preview-content">
+        <h4>{{ form.title }}</h4>
+        <p><strong>类型:</strong> {{ getTypeLabel(form.type) }}</p>
+        <p><strong>描述:</strong> {{ form.description }}</p>
+        <div class="preview-section">
+          <h5>问题陈述</h5>
+          <p>{{ form.problemStatement }}</p>
+        </div>
+        <div class="preview-section">
+          <h5>研究目标</h5>
+          <p>{{ form.researchGoals }}</p>
         </div>
       </div>
     </el-card>
@@ -131,199 +150,209 @@
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue'
+import { ref, reactive, computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { useTaskStore } from '../stores/taskStore'
+import { useTaskStore } from '@/stores/taskStore'
 import { ElMessage } from 'element-plus'
 
 const router = useRouter()
 const taskStore = useTaskStore()
+
+// 表单引用
 const formRef = ref()
-const loading = ref(false)
+
+// 响应式数据
+const submitting = ref(false)
+const showPreview = computed(() => form.value.title && form.value.problemStatement)
 
 // 表单数据
 const form = reactive({
   title: '',
   description: '',
-  task_type: '',
-  constraints: '',
-  input_data_text: '',
-  config: {
-    analysis_model: 'gpt-4',
-    code_model: 'gpt-4',
-    writing_model: 'gpt-4'
-  }
+  type: '',
+  problemStatement: '',
+  researchGoals: '',
+  dataRequirements: '',
+  modelConstraints: '',
+  expectedOutputs: ''
 })
+
+// 任务类型选项
+const taskTypes = [
+  { value: 'OPTIMIZATION', label: '优化问题' },
+  { value: 'PREDICTION', label: '预测问题' },
+  { value: 'CLASSIFICATION', label: '分类问题' },
+  { value: 'SIMULATION', label: '仿真问题' },
+  { value: 'STATISTICAL_ANALYSIS', label: '统计分析' },
+  { value: 'MACHINE_LEARNING', label: '机器学习' },
+  { value: 'COMPLEX_SYSTEM', label: '复杂系统' },
+  { value: 'OTHER', label: '其他' }
+]
 
 // 表单验证规则
 const rules = {
   title: [
     { required: true, message: '请输入任务标题', trigger: 'blur' },
-    { min: 3, max: 100, message: '标题长度在3到100个字符', trigger: 'blur' }
+    { min: 5, max: 200, message: '标题长度应在5-200个字符之间', trigger: 'blur' }
   ],
-  task_type: [
-    { required: true, message: '请选择问题类型', trigger: 'change' }
+  type: [
+    { required: true, message: '请选择任务类型', trigger: 'change' }
   ],
   description: [
-    { required: true, message: '请输入问题描述', trigger: 'blur' },
-    { min: 10, max: 2000, message: '描述长度在10到2000个字符', trigger: 'blur' }
+    { max: 500, message: '描述长度不能超过500个字符', trigger: 'blur' }
+  ],
+  problemStatement: [
+    { required: true, message: '请输入问题陈述', trigger: 'blur' },
+    { min: 50, max: 2000, message: '问题陈述长度应在50-2000个字符之间', trigger: 'blur' }
+  ],
+  researchGoals: [
+    { max: 1000, message: '研究目标长度不能超过1000个字符', trigger: 'blur' }
+  ],
+  dataRequirements: [
+    { max: 1000, message: '数据需求长度不能超过1000个字符', trigger: 'blur' }
+  ],
+  modelConstraints: [
+    { max: 1000, message: '模型约束长度不能超过1000个字符', trigger: 'blur' }
+  ],
+  expectedOutputs: [
+    { max: 1000, message: '预期输出长度不能超过1000个字符', trigger: 'blur' }
   ]
 }
 
-// 示例问题
-const examples = [
-  {
-    title: '城市交通流量优化',
-    description: '基于历史交通数据，建立数学模型优化城市交通信号灯控制策略，减少拥堵时间',
-    task_type: 'optimization',
-    constraints: '考虑道路容量限制、信号灯切换时间约束',
-    input_data_text: '历史交通流量数据、道路网络拓扑、信号灯配置信息'
-  },
-  {
-    title: '股票价格预测',
-    description: '使用机器学习方法分析股票历史数据，预测未来价格走势',
-    task_type: 'data_analysis',
-    constraints: '考虑市场波动性、政策影响等因素',
-    input_data_text: '股票历史价格、成交量、技术指标、宏观经济数据'
-  },
-  {
-    title: '疫情传播模型',
-    description: '建立传染病传播的数学模型，预测疫情发展趋势',
-    task_type: 'math_modeling',
-    constraints: '考虑人口流动、防控措施等因素',
-    input_data_text: '人口数据、疫情统计数据、防控政策信息'
-  }
-]
-
-// 处理表单提交
-const handleSubmit = async () => {
+// 方法
+const submitForm = async () => {
   if (!formRef.value) return
   
   try {
     await formRef.value.validate()
+    submitting.value = true
     
-    loading.value = true
-    
-    // 准备提交数据
     const taskData = {
       title: form.title,
       description: form.description,
-      task_type: form.task_type,
-      constraints: form.constraints || null,
-      input_data: form.input_data_text ? { text: form.input_data_text } : null,
-      config: form.config
+      type: form.type,
+      problemStatement: form.problemStatement,
+      researchGoals: form.researchGoals,
+      dataRequirements: form.dataRequirements,
+      modelConstraints: form.modelConstraints,
+      expectedOutputs: form.expectedOutputs
     }
     
-    // 创建任务
-    const task = await taskStore.createTask(taskData)
+    const newTask = await taskStore.createTask(taskData)
     
     ElMessage.success('任务创建成功！')
-    
-    // 跳转到任务详情页
-    router.push(`/task/${task.id}`)
+    router.push(`/task/${newTask.id}`)
     
   } catch (error) {
-    console.error('创建任务失败:', error)
-    ElMessage.error('创建任务失败，请重试')
+    if (error.message) {
+      ElMessage.error('创建任务失败: ' + error.message)
+    }
   } finally {
-    loading.value = false
+    submitting.value = false
   }
 }
 
-// 加载示例
-const loadExample = (example) => {
-  form.title = example.title
-  form.description = example.description
-  form.task_type = example.task_type
-  form.constraints = example.constraints
-  form.input_data_text = example.input_data_text
-}
-
-// 返回上一页
-const goBack = () => {
-  router.back()
-}
-
-// 获取任务类型标签
-const getTaskTypeTag = (type) => {
-  const tags = {
-    'math_modeling': 'primary',
-    'data_analysis': 'success',
-    'optimization': 'warning',
-    'simulation': 'info'
+const resetForm = () => {
+  if (formRef.value) {
+    formRef.value.resetFields()
   }
-  return tags[type] || 'default'
 }
 
-// 获取任务类型标签
-const getTaskTypeLabel = (type) => {
-  const labels = {
-    'math_modeling': '数学建模',
-    'data_analysis': '数据分析',
-    'optimization': '优化问题',
-    'simulation': '仿真模拟'
-  }
-  return labels[type] || type
+const getTypeLabel = (type) => {
+  const typeObj = taskTypes.find(t => t.value === type)
+  return typeObj ? typeObj.label : type
 }
 </script>
 
 <style lang="scss" scoped>
 .create-task-view {
-  max-width: 800px;
-  margin: 0 auto;
-}
-
-.create-card {
-  margin-bottom: 24px;
-  
-  .card-header {
-    h2 {
+  .page-header {
+    margin-bottom: 24px;
+    
+    h1 {
       margin: 0 0 8px 0;
-      color: #333;
+      color: #303133;
+      font-size: 28px;
+      font-weight: 600;
     }
     
     p {
       margin: 0;
-      color: #666;
-      font-size: 14px;
+      color: #606266;
+      font-size: 16px;
     }
   }
-  
-  .form-actions {
-    display: flex;
-    justify-content: flex-end;
-    gap: 16px;
-  }
-}
 
-.examples-card {
-  .examples {
-    display: grid;
-    gap: 16px;
+  .form-card {
+    margin-bottom: 24px;
     
-    .example-item {
-      padding: 16px;
-      border: 1px solid #e4e7ed;
-      border-radius: 8px;
-      cursor: pointer;
-      transition: all 0.3s;
+    .form-section {
+      margin-bottom: 32px;
       
-      &:hover {
-        border-color: #409eff;
-        background-color: #f0f9ff;
+      h3 {
+        margin: 0 0 16px 0;
+        color: #303133;
+        font-size: 18px;
+        font-weight: 600;
+        border-bottom: 2px solid #409eff;
+        padding-bottom: 8px;
       }
-      
+    }
+    
+    .form-actions {
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+      margin-top: 32px;
+      padding-top: 24px;
+      border-top: 1px solid #ebeef5;
+    }
+  }
+
+  .preview-card {
+    .preview-content {
       h4 {
-        margin: 0 0 8px 0;
-        color: #333;
-        font-size: 16px;
+        margin: 0 0 16px 0;
+        color: #303133;
+        font-size: 20px;
+        font-weight: 600;
       }
       
       p {
         margin: 0 0 12px 0;
-        color: #666;
-        font-size: 14px;
-        line-height: 1.5;
+        color: #606266;
+        line-height: 1.6;
+      }
+      
+      .preview-section {
+        margin-top: 20px;
+        
+        h5 {
+          margin: 0 0 8px 0;
+          color: #303133;
+          font-size: 16px;
+          font-weight: 600;
+        }
+        
+        p {
+          background: #f8f9fa;
+          padding: 12px;
+          border-radius: 6px;
+          border-left: 4px solid #409eff;
+        }
+      }
+    }
+  }
+}
+
+// 响应式设计
+@media (max-width: 768px) {
+  .create-task-view {
+    .form-card {
+      .el-form {
+        :deep(.el-form-item__label) {
+          width: 100px !important;
+        }
       }
     }
   }
