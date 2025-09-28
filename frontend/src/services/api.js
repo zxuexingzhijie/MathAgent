@@ -13,6 +13,7 @@ const api = axios.create({
 api.interceptors.request.use(
   (config) => {
     // 可以在这里添加认证token等
+    console.log('发送请求:', config.method, config.url, config.data)
     return config
   },
   (error) => {
@@ -23,6 +24,7 @@ api.interceptors.request.use(
 // 响应拦截器
 api.interceptors.response.use(
   (response) => {
+    console.log('收到响应:', response.status, response.data)
     return response
   },
   (error) => {

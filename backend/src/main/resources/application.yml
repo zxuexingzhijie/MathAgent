@@ -20,22 +20,22 @@ spring:
       idle-timeout: 600000
       max-lifetime: 1800000
   
-      # MyBatis配置
-      mybatis:
-        mapper-locations: classpath:mapper/*.xml
-        type-aliases-package: com.mathagent.model
-        configuration:
-          map-underscore-to-camel-case: true
-          log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
-      
-      # 数据库初始化配置
-      sql:
-        init:
-          mode: ${DB_INIT_MODE:always}  # never, always, embedded
-          schema-locations: classpath:sql/schema.sql
-          continue-on-error: true
-          separator: ";"
-          encoding: UTF-8
+  # MyBatis配置
+  mybatis:
+    mapper-locations: classpath:mapper/*.xml
+    type-aliases-package: com.mathagent.model
+    configuration:
+      map-underscore-to-camel-case: true
+      log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+  
+  # 数据库初始化配置
+  sql:
+    init:
+      mode: ${DB_INIT_MODE:always}  # never, always, embedded
+      schema-locations: classpath:sql/schema.sql
+      continue-on-error: true
+      separator: ";"
+      encoding: UTF-8
   
   # Spring AI Alibaba配置
   ai:

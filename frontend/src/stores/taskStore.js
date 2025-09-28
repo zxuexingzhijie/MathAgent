@@ -25,11 +25,15 @@ export const useTaskStore = defineStore('task', () => {
 
   // 动作
   const loadTasks = async () => {
+    console.log('taskStore: loadTasks called')
     loading.value = true
     error.value = null
     try {
+      console.log('taskStore: calling taskApi.getTasks()')
       const response = await taskApi.getTasks()
+      console.log('taskStore: received response:', response)
       tasks.value = response.data
+      console.log('taskStore: tasks updated to:', tasks.value)
     } catch (err) {
       error.value = err.message
       console.error('加载任务失败:', err)
@@ -40,6 +44,7 @@ export const useTaskStore = defineStore('task', () => {
 
   // 添加fetchTasks方法以兼容TasksView.vue
   const fetchTasks = async (params = {}) => {
+    console.log('fetchTasks called with params:', params)
     return await loadTasks()
   }
 

@@ -60,7 +60,7 @@
               v-model="form.problemStatement"
               type="textarea"
               :rows="6"
-              placeholder="请详细描述数学建模问题，包括：&#10;1. 问题背景和目标&#10;2. 已知条件和约束&#10;3. 需要求解的内容&#10;4. 预期结果"
+              placeholder="请详细描述数学建模问题，包括：1. 问题背景和目标 2. 已知条件和约束 3. 需要求解的内容 4. 预期结果"
               maxlength="2000"
               show-word-limit
             />
@@ -163,7 +163,7 @@ const formRef = ref()
 
 // 响应式数据
 const submitting = ref(false)
-const showPreview = computed(() => form.value.title && form.value.problemStatement)
+const showPreview = computed(() => form.title && form.problemStatement)
 
 // 表单数据
 const form = reactive({
@@ -238,14 +238,18 @@ const submitForm = async () => {
       expectedOutputs: form.expectedOutputs
     }
     
+    console.log('发送的任务数据:', taskData)
     const newTask = await taskStore.createTask(taskData)
     
     ElMessage.success('任务创建成功！')
     router.push(`/task/${newTask.id}`)
     
   } catch (error) {
+    console.error('创建任务错误:', error)
     if (error.message) {
       ElMessage.error('创建任务失败: ' + error.message)
+    } else {
+      ElMessage.error('创建任务失败，请检查网络连接')
     }
   } finally {
     submitting.value = false

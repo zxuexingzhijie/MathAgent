@@ -214,6 +214,7 @@ const totalCount = ref(0)
 // 获取任务列表
 const fetchTasks = async () => {
   try {
+    console.log('TasksView: fetchTasks called')
     const params = {
       skip: (pagination.page - 1) * pagination.size,
       limit: pagination.size
@@ -223,7 +224,9 @@ const fetchTasks = async () => {
       params.status = filterForm.status
     }
     
+    console.log('TasksView: calling taskStore.fetchTasks with params:', params)
     await taskStore.fetchTasks(params)
+    console.log('TasksView: tasks after fetch:', taskStore.tasks)
     totalCount.value = taskStore.tasks.length // 这里应该从API返回总数
   } catch (error) {
     console.error('获取任务列表失败:', error)
