@@ -30,9 +30,10 @@
 - **模型构建**: 目标函数、约束条件、求解策略
 
 ### 💻 Code Interpreter
-- **Jupyter集成**: 基于Jupyter的代码执行环境
+- **真实Python执行**: 基于ProcessBuilder的真实Python解释器
 - **代码手Agent**: 自动生成Python求解代码
 - **实时执行**: 代码执行、错误调试、结果验证
+- **安全控制**: 代码安全检查，防止危险操作
 - **Notebook保存**: 代码保存为可编辑的notebook
 
 ### 📝 生成编排好格式的论文
@@ -69,3 +70,24 @@
 - Node.js 16+
 - Maven 3.6+
 - MySQL 8.0+
+- **Python 3.8+** (必需)
+- **Python科学计算库** (必需):
+  - numpy
+  - scipy
+  - matplotlib
+  - pandas
+
+### Python环境安装
+
+```bash
+# 安装Python 3.8+
+# Windows: 从 https://python.org 下载安装
+# macOS: brew install python3
+# Ubuntu: sudo apt install python3 python3-pip
+
+# 安装科学计算库
+pip install numpy scipy matplotlib pandas
+
+# 验证安装
+python -c "import numpy, scipy, matplotlib, pandas; print('Python环境配置成功')"
+```

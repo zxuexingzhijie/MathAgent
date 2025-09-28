@@ -6,7 +6,7 @@ import org.springframework.ai.chat.prompt.Prompt;
 import com.alibaba.cloud.ai.graph.OverAllState;
 import com.alibaba.cloud.ai.graph.action.NodeAction;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.mathagent.service.CodeInterpreterService;
+import com.mathagent.service.PythonCodeExecutorService;
 import com.mathagent.service.PromptService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
@@ -31,7 +31,7 @@ public class CodingAgent implements NodeAction {
 	private ChatClient codingChatClient;
 
 	@Autowired
-	private CodeInterpreterService codeInterpreterService;
+	private PythonCodeExecutorService pythonCodeExecutorService;
 
 	@Autowired
 	private PromptService promptService;
@@ -48,13 +48,13 @@ public class CodingAgent implements NodeAction {
 			String taskId = state.value("task_id").get().toString();
 
 			// 创建代码执行会话
-			CodeInterpreterService.JupyterSession session = codeInterpreterService.createSession(taskId);
+			PythonCodeExecutorService.PythonSession session = pythonCodeExecutorService.createSession(taskId);
 
 			// 生成代码
 			String code = generateCode(modelingResult);
 
 			// 执行代码
-			CodeInterpreterService.CodeExecutionResult result = codeInterpreterService
+			PythonCodeExecutorService.CodeExecutionResult result = pythonCodeExecutorService
 				.executeCode(session.getSessionId(), code, "python");
 
 			// 处理执行结果
@@ -63,7 +63,7 @@ public class CodingAgent implements NodeAction {
 			// 如果执行失败，尝试调试
 			if (!result.isSuccess()) {
 				String debugCode = debugCode(code, result.getError());
-				CodeInterpreterService.CodeExecutionResult debugResult = codeInterpreterService
+				PythonCodeExecutorService.CodeExecutionResult debugResult = pythonCodeExecutorService
 					.executeCode(session.getSessionId(), debugCode, "python");
 				codingResult.put("debug_result", processExecutionResult(debugResult, debugCode));
 			}
@@ -100,7 +100,7 @@ public class CodingAgent implements NodeAction {
 		return response;
 	}
 
-	private Map<String, Object> processExecutionResult(CodeInterpreterService.CodeExecutionResult result, String code) {
+	private Map<String, Object> processExecutionResult(PythonCodeExecutorService.CodeExecutionResult result, String code) {
 		Map<String, Object> codingResult = Map.of("code", code, "success", result.isSuccess(), "output",
 				result.getOutput(), "error", result.getError(), "execution_time",
 				result.getEndTime() != null && result.getStartTime() != null
