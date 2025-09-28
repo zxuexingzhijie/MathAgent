@@ -15,21 +15,29 @@
         <el-form-item label="状态筛选">
           <el-select v-model="filterForm.status" placeholder="全部状态" clearable>
             <el-option label="全部" value="" />
-            <el-option label="等待中" value="pending" />
-            <el-option label="运行中" value="running" />
-            <el-option label="已完成" value="completed" />
-            <el-option label="失败" value="failed" />
-            <el-option label="已取消" value="cancelled" />
+            <el-option label="已创建" value="CREATED" />
+            <el-option label="分析中" value="ANALYZING" />
+            <el-option label="数据收集中" value="DATA_COLLECTING" />
+            <el-option label="模型构建中" value="MODEL_BUILDING" />
+            <el-option label="求解中" value="SOLVING" />
+            <el-option label="生成报告中" value="GENERATING_REPORT" />
+            <el-option label="已完成" value="COMPLETED" />
+            <el-option label="失败" value="FAILED" />
+            <el-option label="已取消" value="CANCELLED" />
           </el-select>
         </el-form-item>
         
         <el-form-item label="类型筛选">
-          <el-select v-model="filterForm.task_type" placeholder="全部类型" clearable>
+          <el-select v-model="filterForm.type" placeholder="全部类型" clearable>
             <el-option label="全部" value="" />
-            <el-option label="数学建模" value="math_modeling" />
-            <el-option label="数据分析" value="data_analysis" />
-            <el-option label="优化问题" value="optimization" />
-            <el-option label="仿真模拟" value="simulation" />
+            <el-option label="优化问题" value="OPTIMIZATION" />
+            <el-option label="预测问题" value="PREDICTION" />
+            <el-option label="分类问题" value="CLASSIFICATION" />
+            <el-option label="仿真问题" value="SIMULATION" />
+            <el-option label="统计分析" value="STATISTICAL_ANALYSIS" />
+            <el-option label="机器学习" value="MACHINE_LEARNING" />
+            <el-option label="复杂系统" value="COMPLEX_SYSTEM" />
+            <el-option label="其他" value="OTHER" />
           </el-select>
         </el-form-item>
         
@@ -86,11 +94,11 @@
             <div class="task-title">
               <span>{{ row.title }}</span>
               <el-tag 
-                :type="getTaskTypeTag(row.task_type)" 
+                :type="getTaskTypeTag(row.type)" 
                 size="small"
                 style="margin-left: 8px;"
               >
-                {{ getTaskTypeLabel(row.task_type) }}
+                {{ getTaskTypeLabel(row.type) }}
               </el-tag>
             </div>
           </template>
@@ -104,15 +112,15 @@
           </template>
         </el-table-column>
         
-        <el-table-column prop="created_at" label="创建时间" width="180">
+        <el-table-column prop="createdAt" label="创建时间" width="180">
           <template #default="{ row }">
-            {{ formatTime(row.created_at) }}
+            {{ formatTime(row.createdAt) }}
           </template>
         </el-table-column>
         
-        <el-table-column prop="updated_at" label="更新时间" width="180">
+        <el-table-column prop="updatedAt" label="更新时间" width="180">
           <template #default="{ row }">
-            {{ formatTime(row.updated_at) }}
+            {{ formatTime(row.updatedAt) }}
           </template>
         </el-table-column>
         
@@ -128,10 +136,10 @@
               
               <el-button 
                 size="small" 
-                type="danger" 
+                type="warning" 
                 @click.stop="handleCancel(row)"
-                :disabled="row.status !== 'running'"
-                v-if="row.status === 'running'"
+                :disabled="!canCancel(row.status)"
+                v-if="canCancel(row.status)"
               >
                 取消
               </el-button>
@@ -140,20 +148,21 @@
                 size="small" 
                 type="success" 
                 @click.stop="goToResults(row.id)"
-                :disabled="row.status !== 'completed'"
-                v-if="row.status === 'completed'"
+                :disabled="row.status !== 'COMPLETED'"
+                v-if="row.status === 'COMPLETED'"
               >
                 结果
               </el-button>
               
-              <el-button 
+              <!-- 删除功能后端未实现，暂时移除 -->
+              <!-- <el-button 
                 size="small" 
                 type="danger" 
                 @click.stop="handleDelete(row)"
                 :disabled="row.status === 'running'"
               >
                 删除
-              </el-button>
+              </el-button> -->
             </div>
           </template>
         </el-table-column>
@@ -190,7 +199,7 @@ const taskStore = useTaskStore()
 // 筛选表单
 const filterForm = reactive({
   status: '',
-  task_type: '',
+  type: '',
   search: ''
 })
 
@@ -231,7 +240,7 @@ const handleSearch = () => {
 // 重置筛选
 const resetFilter = () => {
   filterForm.status = ''
-  filterForm.task_type = ''
+  filterForm.type = ''
   filterForm.search = ''
   pagination.page = 1
   fetchTasks()
@@ -289,34 +298,43 @@ const handleCancel = async (task) => {
   }
 }
 
-// 删除任务
-const handleDelete = async (task) => {
-  try {
-    await ElMessageBox.confirm('确定要删除这个任务吗？删除后无法恢复。', '确认删除', {
-      type: 'warning'
-    })
-    
-    await taskStore.deleteTask(task.id)
-    ElMessage.success('任务已删除')
-    
-    // 刷新列表
-    await fetchTasks()
-  } catch (error) {
-    if (error !== 'cancel') {
-      console.error('删除任务失败:', error)
-      ElMessage.error('删除任务失败')
-    }
-  }
+// 判断是否可以取消任务
+const canCancel = (status) => {
+  return ['ANALYZING', 'DATA_COLLECTING', 'MODEL_BUILDING', 'SOLVING', 'GENERATING_REPORT'].includes(status)
 }
+
+// 删除任务功能后端未实现，暂时移除
+// const handleDelete = async (task) => {
+//   try {
+//     await ElMessageBox.confirm('确定要删除这个任务吗？删除后无法恢复。', '确认删除', {
+//       type: 'warning'
+//     })
+//     
+//     await taskStore.deleteTask(task.id)
+//     ElMessage.success('任务已删除')
+//     
+//     // 刷新列表
+//     await fetchTasks()
+//   } catch (error) {
+//     if (error !== 'cancel') {
+//       console.error('删除任务失败:', error)
+//       ElMessage.error('删除任务失败')
+//     }
+//   }
+// }
 
 // 获取状态标签类型
 const getStatusTag = (status) => {
   const tags = {
-    'pending': 'info',
-    'running': 'warning',
-    'completed': 'success',
-    'failed': 'danger',
-    'cancelled': 'info'
+    'CREATED': 'info',
+    'ANALYZING': 'warning',
+    'DATA_COLLECTING': 'warning',
+    'MODEL_BUILDING': 'warning',
+    'SOLVING': 'warning',
+    'GENERATING_REPORT': 'warning',
+    'COMPLETED': 'success',
+    'FAILED': 'danger',
+    'CANCELLED': 'info'
   }
   return tags[status] || 'default'
 }
@@ -324,11 +342,15 @@ const getStatusTag = (status) => {
 // 获取状态标签文本
 const getStatusLabel = (status) => {
   const labels = {
-    'pending': '等待中',
-    'running': '运行中',
-    'completed': '已完成',
-    'failed': '失败',
-    'cancelled': '已取消'
+    'CREATED': '已创建',
+    'ANALYZING': '分析中',
+    'DATA_COLLECTING': '数据收集中',
+    'MODEL_BUILDING': '模型构建中',
+    'SOLVING': '求解中',
+    'GENERATING_REPORT': '生成报告中',
+    'COMPLETED': '已完成',
+    'FAILED': '失败',
+    'CANCELLED': '已取消'
   }
   return labels[status] || status
 }
@@ -336,10 +358,14 @@ const getStatusLabel = (status) => {
 // 获取任务类型标签
 const getTaskTypeTag = (type) => {
   const tags = {
-    'math_modeling': 'primary',
-    'data_analysis': 'success',
-    'optimization': 'warning',
-    'simulation': 'info'
+    'OPTIMIZATION': 'success',
+    'PREDICTION': 'primary',
+    'CLASSIFICATION': 'info',
+    'SIMULATION': 'warning',
+    'STATISTICAL_ANALYSIS': 'danger',
+    'MACHINE_LEARNING': 'success',
+    'COMPLEX_SYSTEM': 'primary',
+    'OTHER': 'info'
   }
   return tags[type] || 'default'
 }
@@ -347,10 +373,14 @@ const getTaskTypeTag = (type) => {
 // 获取任务类型标签
 const getTaskTypeLabel = (type) => {
   const labels = {
-    'math_modeling': '数学建模',
-    'data_analysis': '数据分析',
-    'optimization': '优化问题',
-    'simulation': '仿真模拟'
+    'OPTIMIZATION': '优化问题',
+    'PREDICTION': '预测问题',
+    'CLASSIFICATION': '分类问题',
+    'SIMULATION': '仿真问题',
+    'STATISTICAL_ANALYSIS': '统计分析',
+    'MACHINE_LEARNING': '机器学习',
+    'COMPLEX_SYSTEM': '复杂系统',
+    'OTHER': '其他'
   }
   return labels[type] || type
 }
@@ -362,7 +392,7 @@ const formatTime = (timeStr) => {
 }
 
 // 监听筛选条件变化
-watch([() => filterForm.status, () => filterForm.task_type], () => {
+watch([() => filterForm.status, () => filterForm.type], () => {
   pagination.page = 1
   fetchTasks()
 })

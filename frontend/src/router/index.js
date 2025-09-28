@@ -3,20 +3,14 @@ import { createRouter, createWebHistory } from 'vue-router'
 const routes = [
   {
     path: '/',
-    name: 'DeepResearch',
-    component: () => import('@/views/DeepResearchView.vue'),
-    meta: { title: '深度研究' }
-  },
-  {
-    path: '/research/:id',
-    name: 'ResearchDetail',
-    component: () => import('@/views/DeepResearchView.vue'),
-    meta: { title: '研究详情' }
+    name: 'Home',
+    component: () => import('@/views/HomeView.vue'),
+    meta: { title: '首页' }
   },
   {
     path: '/tasks',
     name: 'Tasks',
-    component: () => import('@/views/HomeView.vue'),
+    component: () => import('@/views/TasksView.vue'),
     meta: { title: '任务管理' }
   },
   {
@@ -30,18 +24,6 @@ const routes = [
     name: 'TaskDetail',
     component: () => import('@/views/TaskDetailView.vue'),
     meta: { title: '任务详情' }
-  },
-  {
-    path: '/results',
-    name: 'Results',
-    component: () => import('@/views/ResultsView.vue'),
-    meta: { title: '结果查看' }
-  },
-  {
-    path: '/settings',
-    name: 'Settings',
-    component: () => import('@/views/SettingsView.vue'),
-    meta: { title: '系统设置' }
   },
   {
     path: '/:pathMatch(.*)*',

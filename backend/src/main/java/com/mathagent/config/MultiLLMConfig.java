@@ -20,11 +20,11 @@ public class MultiLLMConfig {
 	@Value("${spring.ai.dashscope.api-key}")
 	private String apiKey;
 
-	// 模型配置常量
+	// 模型配置常量 - 默认使用百炼模型
 	private static final String MODELING_MODEL = "qwen-max";
-	private static final String CODING_MODEL = "qwen-plus";
+	private static final String CODING_MODEL = "qwen-max";
 	private static final String WRITING_MODEL = "qwen-max";
-	private static final String ANALYSIS_MODEL = "qwen-turbo";
+	private static final String ANALYSIS_MODEL = "qwen-max";
 	
 	// 温度参数常量
 	private static final double MODELING_TEMPERATURE = 0.3;

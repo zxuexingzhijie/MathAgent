@@ -55,10 +55,10 @@ export const taskApi = {
   getTaskLogs: (taskId) => api.get(`/tasks/${taskId}/logs`)
 }
 
-// 统计相关API
-export const statsApi = {
-  // 获取系统统计信息
-  getStatistics: () => api.get('/statistics')
-}
+// 统计相关API - 后端未实现，暂时移除
+// export const statsApi = {
+//   // 获取系统统计信息
+//   getStatistics: () => api.get('/statistics')
+// }
 
 export default api

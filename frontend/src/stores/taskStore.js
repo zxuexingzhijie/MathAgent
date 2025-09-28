@@ -38,6 +38,17 @@ export const useTaskStore = defineStore('task', () => {
     }
   }
 
+  // 添加fetchTasks方法以兼容TasksView.vue
+  const fetchTasks = async (params = {}) => {
+    return await loadTasks()
+  }
+
+  // 添加deleteTask方法 - 后端未实现，暂时移除
+  // const deleteTask = async (taskId) => {
+  //   // 后端没有删除接口，暂时不实现
+  //   throw new Error('删除功能暂未实现')
+  // }
+
   const createTask = async (taskData) => {
     loading.value = true
     error.value = null
@@ -170,6 +181,7 @@ export const useTaskStore = defineStore('task', () => {
     
     // 动作
     loadTasks,
+    fetchTasks, // 添加fetchTasks方法
     createTask,
     executeTask,
     cancelTask,
@@ -180,5 +192,6 @@ export const useTaskStore = defineStore('task', () => {
     updateTask,
     removeTask,
     clearError
+    // deleteTask 暂时移除，后端未实现
   }
 })
