@@ -8,28 +8,15 @@ const routes = [
     meta: { title: '首页' }
   },
   {
-    path: '/tasks',
-    name: 'Tasks',
-    component: () => import('@/views/TasksView.vue'),
-    meta: { title: '任务管理' }
-  },
-  {
-    path: '/create',
-    name: 'CreateTask',
-    component: () => import('@/views/CreateTaskView.vue'),
-    meta: { title: '创建任务' }
-  },
-  {
-    path: '/task/:id',
-    name: 'TaskDetail',
-    component: () => import('@/views/TaskDetailView.vue'),
-    meta: { title: '任务详情' }
+    path: '/chat/:sessionId',
+    name: 'Chat',
+    component: () => import('@/views/ChatView.vue'),
+    meta: { title: '对话' }
   },
   {
     path: '/:pathMatch(.*)*',
     name: 'NotFound',
-    component: () => import('@/views/NotFoundView.vue'),
-    meta: { title: '页面未找到' }
+    redirect: '/'
   }
 ]
 
@@ -42,7 +29,9 @@ const router = createRouter({
 router.beforeEach((to, from, next) => {
   // 设置页面标题
   if (to.meta.title) {
-    document.title = `${to.meta.title} - 数学建模DeepResearch Agent`
+    document.title = `${to.meta.title} - 对话式数学建模Agent`
+  } else {
+    document.title = '对话式数学建模Agent'
   }
   next()
 })

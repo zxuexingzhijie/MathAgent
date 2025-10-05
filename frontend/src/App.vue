@@ -9,9 +9,9 @@
             <span class="logo-text">数学建模DeepResearch Agent</span>
           </div>
           <div class="header-actions">
-            <el-button type="primary" @click="goToCreate" class="new-task-btn">
-              <el-icon><Plus /></el-icon>
-              创建任务
+            <el-button type="primary" @click="startNewChat" class="new-chat-btn">
+              <el-icon><ChatDotRound /></el-icon>
+              新建对话
             </el-button>
           </div>
         </div>
@@ -19,23 +19,8 @@
 
       <!-- 主要内容区域 -->
       <el-container>
-        <!-- 左侧边栏 - 简化版 -->
-        <el-aside width="200px" class="app-sidebar">
-          <!-- 导航菜单 -->
-          <div class="nav-section">
-            <div class="nav-item" @click="goToTasks">
-              <el-icon><List /></el-icon>
-              <span>任务管理</span>
-            </div>
-            <div class="nav-item" @click="goToCreate">
-              <el-icon><Plus /></el-icon>
-              <span>创建任务</span>
-            </div>
-          </div>
-        </el-aside>
-
-        <!-- 主内容区 -->
-        <el-main class="app-main">
+        <!-- 主内容区 - 全屏 -->
+        <el-main class="app-main full-width">
           <router-view />
         </el-main>
       </el-container>
@@ -52,12 +37,18 @@ const router = useRouter()
 
 
 // 方法
-const goToTasks = () => {
-  router.push('/tasks')
-}
-
-const goToCreate = () => {
-  router.push('/create')
+const startNewChat = async () => {
+  try {
+    const response = await fetch('/api/chat/sessions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title: `对话 ${new Date().toLocaleString()}` })
+    })
+    const session = await response.json()
+    router.push(`/chat/${session.id}`)
+  } catch (error) {
+    console.error('创建会话失败:', error)
+  }
 }
 
 </script>
@@ -100,48 +91,15 @@ const goToCreate = () => {
       gap: 12px;
       align-items: center;
 
-      .new-task-btn {
-        background: #4285f4;
-        border-color: #4285f4;
+      .new-chat-btn {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
         
         &:hover {
-          background: #3367d6;
-          border-color: #3367d6;
+          background: linear-gradient(135deg, #5568d3 0%, #6a3f8f 100%);
         }
       }
 
-    }
-  }
-}
-
-.app-sidebar {
-  background: white;
-  border-right: 1px solid #e9ecef;
-  padding: 16px 0;
-
-  .nav-section {
-    padding: 0 16px;
-
-    .nav-item {
-      display: flex;
-      align-items: center;
-      padding: 12px 16px;
-      border-radius: 8px;
-      cursor: pointer;
-      color: #202124;
-      font-size: 14px;
-      margin-bottom: 4px;
-      transition: all 0.2s ease;
-
-      &:hover {
-        background: #f1f3f4;
-      }
-
-      .el-icon {
-        margin-right: 12px;
-        font-size: 16px;
-        color: #5f6368;
-      }
     }
   }
 }
@@ -150,19 +108,19 @@ const goToCreate = () => {
   background: #f8f9fa;
   padding: 0;
   overflow-y: auto;
+  
+  &.full-width {
+    width: 100%;
+  }
 }
 
 // 响应式设计
 @media (max-width: 768px) {
-  .app-sidebar {
-    width: 160px !important;
-  }
-  
   .header-content {
     padding: 0 16px;
     
     .logo-text {
-      display: none;
+      font-size: 14px;
     }
   }
 }

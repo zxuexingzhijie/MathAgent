@@ -1,0 +1,15 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: math-model-agent-java
+
+logging:
+  level:
+    root: WARN
+    com.mathmodel: INFO
+  file:
+    name: logs/math-model-agent.log
+    max-size: 10MB
+    max-history: 30

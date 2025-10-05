@@ -57,10 +57,41 @@ export const taskApi = {
   getTaskLogs: (taskId) => api.get(`/tasks/${taskId}/logs`)
 }
 
-// 统计相关API - 后端未实现，暂时移除
-// export const statsApi = {
-//   // 获取系统统计信息
-//   getStatistics: () => api.get('/statistics')
-// }
+// 聊天相关API
+export const chatApi = {
+  // 获取会话列表
+  getSessions: () => api.get('/chat/sessions'),
+  
+  // 创建会话
+  createSession: (data) => api.post('/chat/sessions', data),
+  
+  // 获取会话详情
+  getSession: (sessionId) => api.get(`/chat/sessions/${sessionId}`),
+  
+  // 获取会话消息
+  getMessages: (sessionId) => api.get(`/chat/sessions/${sessionId}/messages`),
+  
+  // 发送消息（使用SSE）
+  // 注意：这个方法返回EventSource，需要特殊处理
+  sendMessage: (sessionId, content, fileData) => {
+    const params = new URLSearchParams({
+      content: content,
+      fileData: fileData || ''
+    })
+    return new EventSource(`/api/chat/sessions/${sessionId}/messages?${params}`)
+  },
+  
+  // 停止生成
+  stopGeneration: (sessionId) => api.post(`/chat/sessions/${sessionId}/stop`),
+  
+  // 删除会话
+  deleteSession: (sessionId) => api.delete(`/chat/sessions/${sessionId}`),
+  
+  // 清空消息
+  clearMessages: (sessionId) => api.delete(`/chat/sessions/${sessionId}/messages`),
+  
+  // 导出会话
+  exportSession: (sessionId) => api.get(`/chat/sessions/${sessionId}/export`)
+}
 
 export default api

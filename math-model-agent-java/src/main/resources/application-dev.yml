@@ -1,0 +1,13 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: math-model-agent-java
+  profiles:
+    active: dev
+
+logging:
+  level:
+    root: INFO
+    com.mathmodel: DEBUG

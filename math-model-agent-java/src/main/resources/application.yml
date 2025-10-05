@@ -1,0 +1,110 @@
+spring:
+  application:
+    name: math-model-agent-java
+  
+  # Redis Configuration
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      database: 0
+      timeout: 3000ms
+      lettuce:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 0
+          max-wait: -1ms
+
+  # WebSocket Configuration
+  websocket:
+    max-text-message-buffer-size: 512000
+    max-binary-message-buffer-size: 512000
+
+  # Servlet Configuration
+  servlet:
+    multipart:
+      max-file-size: 100MB
+      max-request-size: 100MB
+
+server:
+  port: ${SERVER_PORT:8080}
+  servlet:
+    context-path: /api
+
+# Spring AI Alibaba Configuration
+spring-ai-alibaba:
+  dashscope:
+    api-key: ${DASHSCOPE_API_KEY}
+    base-url: ${DASHSCOPE_BASE_URL:https://dashscope.aliyuncs.com/api/v1}
+    chat:
+      options:
+        model: ${COORDINATOR_MODEL:qwen-max}
+        temperature: 0.7
+        max-tokens: 4000
+
+# Math Model Agent Configuration
+math-model:
+  # Working Directory
+  work-dir: ${WORK_DIR:./project/work_dir}
+  
+  # Max Configuration
+  max-chat-turns: ${MAX_CHAT_TURNS:30}
+  max-retries: ${MAX_RETRIES:3}
+  
+  # Model Configuration for Different Agents
+  models:
+    coordinator:
+      model: ${COORDINATOR_MODEL:qwen-max}
+      temperature: 0.7
+      max-tokens: 4000
+    modeler:
+      model: ${MODELER_MODEL:qwen-max}
+      temperature: 0.7
+      max-tokens: 4000
+    coder:
+      model: ${CODER_MODEL:qwen-max}
+      temperature: 0.3
+      max-tokens: 4000
+    writer:
+      model: ${WRITER_MODEL:qwen-max}
+      temperature: 0.7
+      max-tokens: 8000
+  
+  # Code Interpreter Configuration
+  code-interpreter:
+    type: ${INTERPRETER_TYPE:local}  # local or e2b
+    timeout: 300
+    kernel-name: python3
+    e2b:
+      api-key: ${E2B_API_KEY:}
+  
+  # Scholar Configuration
+  scholar:
+    openalex:
+      email: ${OPENALEX_EMAIL:}
+      per-page: 10
+      max-results: 20
+
+# Logging Configuration
+logging:
+  level:
+    root: INFO
+    com.mathmodel: DEBUG
+    com.alibaba.cloud.ai: DEBUG
+    org.springframework.ai: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+  file:
+    name: logs/math-model-agent.log
+    max-size: 10MB
+    max-history: 30
+
+# CORS Configuration
+cors:
+  allowed-origins: ${CORS_ORIGINS:http://localhost:5173,http://localhost:3000}
+  allowed-methods: GET,POST,PUT,DELETE,OPTIONS
+  allowed-headers: "*"
+  allow-credentials: true

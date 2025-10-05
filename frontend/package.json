@@ -19,6 +19,7 @@
     "echarts": "^5.4.0",
     "vue-echarts": "^6.6.0",
     "markdown-it": "^14.0.0",
+    "marked": "^11.0.0",
     "highlight.js": "^11.9.0",
     "dayjs": "^1.11.0"
   },
