@@ -48,7 +48,7 @@ public class CoordinatorAgent extends BaseAgent {
 
                 // Call LLM
                 ChatResponse response = chat();
-                String jsonStr = response.getResult().getOutput().getContent();
+                String jsonStr = response.getResult().getOutput().getText();
 
                 // Clean JSON string
                 jsonStr = cleanJsonString(jsonStr);
@@ -58,7 +58,8 @@ public class CoordinatorAgent extends BaseAgent {
                 }
 
                 // Parse JSON
-                Map<String, Object> result = objectMapper.readValue(jsonStr, new TypeReference<>() {});
+                Map<String, Object> result = objectMapper.readValue(jsonStr, new TypeReference<Map<String, Object>>() {});
+                @SuppressWarnings("unchecked")
                 Map<String, Object> questions = (Map<String, Object>) result.get("questions");
                 Integer quesCount = (Integer) result.get("ques_count");
 

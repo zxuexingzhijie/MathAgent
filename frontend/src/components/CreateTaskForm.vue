@@ -4,100 +4,42 @@
       ref="formRef"
       :model="form"
       :rules="rules"
-      label-width="100px"
+      label-width="120px"
       label-position="left"
     >
-      <el-form-item label="任务标题" prop="title">
+      <el-form-item label="问题描述" prop="quesAll">
         <el-input
-          v-model="form.title"
-          placeholder="请输入任务标题"
-          maxlength="200"
+          v-model="form.quesAll"
+          type="textarea"
+          :rows="8"
+          placeholder="请详细描述您的数学建模问题..."
+          maxlength="5000"
           show-word-limit
         />
       </el-form-item>
 
-      <el-form-item label="任务类型" prop="type">
-        <el-select v-model="form.type" placeholder="请选择任务类型" style="width: 100%">
-          <el-option
-            v-for="type in taskTypes"
-            :key="type.value"
-            :label="type.label"
-            :value="type.value"
-          />
+      <el-form-item label="竞赛模板" prop="compTemplate">
+        <el-select v-model="form.compTemplate" placeholder="请选择竞赛模板" style="width: 100%">
+          <el-option label="中国赛" value="CHINA" />
+          <el-option label="美国赛" value="USA" />
+          <el-option label="国际赛" value="GLOBAL" />
+          <el-option label="通用" value="GENERAL" />
         </el-select>
       </el-form-item>
 
-      <el-form-item label="任务描述" prop="description">
-        <el-input
-          v-model="form.description"
-          type="textarea"
-          :rows="3"
-          placeholder="请输入任务描述"
-          maxlength="500"
-          show-word-limit
-        />
-      </el-form-item>
-
-      <el-form-item label="问题陈述" prop="problemStatement">
-        <el-input
-          v-model="form.problemStatement"
-          type="textarea"
-          :rows="6"
-          placeholder="请详细描述数学建模问题"
-          maxlength="2000"
-          show-word-limit
-        />
-      </el-form-item>
-
-      <el-form-item label="研究目标" prop="researchGoals">
-        <el-input
-          v-model="form.researchGoals"
-          type="textarea"
-          :rows="3"
-          placeholder="请描述研究的具体目标"
-          maxlength="1000"
-          show-word-limit
-        />
-      </el-form-item>
-
-      <el-form-item label="数据需求" prop="dataRequirements">
-        <el-input
-          v-model="form.dataRequirements"
-          type="textarea"
-          :rows="3"
-          placeholder="请描述需要的数据类型和来源"
-          maxlength="1000"
-          show-word-limit
-        />
-      </el-form-item>
-
-      <el-form-item label="模型约束" prop="modelConstraints">
-        <el-input
-          v-model="form.modelConstraints"
-          type="textarea"
-          :rows="3"
-          placeholder="请描述模型的约束条件"
-          maxlength="1000"
-          show-word-limit
-        />
-      </el-form-item>
-
-      <el-form-item label="预期输出" prop="expectedOutputs">
-        <el-input
-          v-model="form.expectedOutputs"
-          type="textarea"
-          :rows="3"
-          placeholder="请描述期望的输出格式"
-          maxlength="1000"
-          show-word-limit
-        />
+      <el-form-item label="输出格式" prop="formatOutput">
+        <el-radio-group v-model="form.formatOutput">
+          <el-radio label="MARKDOWN">Markdown</el-radio>
+          <el-radio label="LATEX">LaTeX</el-radio>
+        </el-radio-group>
       </el-form-item>
 
       <el-form-item>
         <div class="form-actions">
           <el-button @click="resetForm">重置</el-button>
           <el-button type="primary" @click="submitForm" :loading="submitting">
-            创建任务
+            <el-icon><Promotion /></el-icon>
+            开始建模
           </el-button>
         </div>
       </el-form-item>
@@ -107,55 +49,37 @@
 
 <script setup>
 import { ref, reactive } from 'vue'
-import { useTaskStore } from '@/stores/taskStore'
+import { useRouter } from 'vue-router'
+import { modelingApi } from '@/services/modelingApi'
 import { ElMessage } from 'element-plus'
+import { Promotion } from '@element-plus/icons-vue'
 
-const emit = defineEmits(['task-created'])
-
-const taskStore = useTaskStore()
+const router = useRouter()
 const formRef = ref()
 const submitting = ref(false)
 
 // 表单数据
 const form = reactive({
-  title: '',
-  description: '',
-  type: '',
-  problemStatement: '',
-  researchGoals: '',
-  dataRequirements: '',
-  modelConstraints: '',
-  expectedOutputs: ''
+  quesAll: '',
+  compTemplate: 'CHINA',
+  formatOutput: 'MARKDOWN'
 })
-
-// 任务类型选项
-const taskTypes = [
-  { value: 'OPTIMIZATION', label: '优化问题' },
-  { value: 'PREDICTION', label: '预测问题' },
-  { value: 'CLASSIFICATION', label: '分类问题' },
-  { value: 'SIMULATION', label: '仿真问题' },
-  { value: 'STATISTICAL_ANALYSIS', label: '统计分析' },
-  { value: 'MACHINE_LEARNING', label: '机器学习' },
-  { value: 'COMPLEX_SYSTEM', label: '复杂系统' },
-  { value: 'OTHER', label: '其他' }
-]
 
 // 表单验证规则
 const rules = {
-  title: [
-    { required: true, message: '请输入任务标题', trigger: 'blur' },
-    { min: 5, max: 200, message: '标题长度应在5-200个字符之间', trigger: 'blur' }
+  quesAll: [
+    { required: true, message: '请输入问题描述', trigger: 'blur' },
+    { min: 50, message: '问题描述至少50个字符', trigger: 'blur' }
   ],
-  type: [
-    { required: true, message: '请选择任务类型', trigger: 'change' }
+  compTemplate: [
+    { required: true, message: '请选择竞赛模板', trigger: 'change' }
   ],
-  problemStatement: [
-    { required: true, message: '请输入问题陈述', trigger: 'blur' },
-    { min: 50, max: 2000, message: '问题陈述长度应在50-2000个字符之间', trigger: 'blur' }
+  formatOutput: [
+    { required: true, message: '请选择输出格式', trigger: 'change' }
   ]
 }
 
-// 方法
+// 提交表单
 const submitForm = async () => {
   if (!formRef.value) return
   
@@ -163,16 +87,29 @@ const submitForm = async () => {
     await formRef.value.validate()
     submitting.value = true
     
-    const taskData = { ...form }
-    const newTask = await taskStore.createTask(taskData)
+    // 生成任务ID
+    const taskId = await modelingApi.generateTaskId()
+    console.log('生成任务ID:', taskId)
     
-    ElMessage.success('任务创建成功！')
-    emit('task-created', newTask)
+    // 提交建模任务
+    const result = await modelingApi.submitProblem({
+      taskId: taskId,
+      quesAll: form.quesAll,
+      compTemplate: form.compTemplate,
+      formatOutput: form.formatOutput
+    })
+    
+    ElMessage.success(result.message || '任务提交成功！')
+    
+    // 跳转到任务详情页面（实时查看进度）
+    router.push({
+      name: 'TaskDetail',
+      params: { taskId: taskId }
+    })
     
   } catch (error) {
-    if (error.message) {
-      ElMessage.error('创建任务失败: ' + error.message)
-    }
+    console.error('提交失败:', error)
+    ElMessage.error('提交失败: ' + error.message)
   } finally {
     submitting.value = false
   }
@@ -187,6 +124,10 @@ const resetForm = () => {
 
 <style lang="scss" scoped>
 .create-task-form {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 24px;
+
   .form-actions {
     display: flex;
     justify-content: center;

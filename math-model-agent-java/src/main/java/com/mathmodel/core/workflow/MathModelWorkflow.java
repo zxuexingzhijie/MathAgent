@@ -2,21 +2,27 @@ package com.mathmodel.core.workflow;
 
 import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatModel;
 import com.mathmodel.config.MathModelProperties;
+import com.mathmodel.core.agent.CoderAgent;
 import com.mathmodel.core.agent.CoordinatorAgent;
 import com.mathmodel.core.agent.ModelerAgent;
+import com.mathmodel.core.agent.WriterAgent;
+import com.mathmodel.core.interpreter.CodeInterpreter;
 import com.mathmodel.core.prompts.PromptLoader;
+import com.mathmodel.schema.a2a.CoderToWriter;
 import com.mathmodel.schema.a2a.CoordinatorToModeler;
 import com.mathmodel.schema.a2a.ModelerToCoder;
 import com.mathmodel.schema.request.ProblemRequest;
 import com.mathmodel.schema.response.SystemMessage;
+import com.mathmodel.service.ScholarService;
 import com.mathmodel.service.WebSocketService;
 import com.mathmodel.util.FileUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Map;
 
 /**
  * Math Model Workflow
@@ -30,16 +36,22 @@ public class MathModelWorkflow {
     private final WebSocketService webSocketService;
     private final ModelFactory modelFactory;
     private final PromptLoader promptLoader;
+    private final CodeInterpreter codeInterpreter;
+    private final ScholarService scholarService;
 
     public MathModelWorkflow(
             MathModelProperties properties,
             WebSocketService webSocketService,
             ModelFactory modelFactory,
-            PromptLoader promptLoader) {
+            PromptLoader promptLoader,
+            CodeInterpreter codeInterpreter,
+            ScholarService scholarService) {
         this.properties = properties;
         this.webSocketService = webSocketService;
         this.modelFactory = modelFactory;
         this.promptLoader = promptLoader;
+        this.codeInterpreter = codeInterpreter;
+        this.scholarService = scholarService;
     }
 
     /**
@@ -101,23 +113,73 @@ public class MathModelWorkflow {
             throw e;
         }
 
-        sendMessage(taskId, SystemMessage.success("建模完成"));
+        sendMessage(taskId, SystemMessage.success("建模完成，任务转交给代码手"));
 
         // Step 3: Coder Agent - Write and execute code
-        sendMessage(taskId, SystemMessage.info("代码手准备开始编码..."));
-        
-        // TODO: Implement CoderAgent
-        log.info("[Workflow] Coder agent execution - to be implemented");
+        sendMessage(taskId, SystemMessage.info("代码手开始编写和执行代码ing..."));
+
+        DashScopeChatModel coderModel = modelFactory.createCoderModel();
+        CoderAgent coderAgent = new CoderAgent(
+                taskId,
+                coderModel,
+                properties.getMaxChatTurns(),
+                promptLoader,
+                codeInterpreter
+        );
+
+        CoderToWriter coderResponse;
+        try {
+            coderResponse = (CoderToWriter) coderAgent.run(modelerResponse);
+            log.info("[Workflow] Coder completed. Generated {} images",
+                    coderResponse.getCreatedImages() != null ? coderResponse.getCreatedImages().size() : 0);
+        } catch (Exception e) {
+            log.error("[Workflow] Coder failed: {}", e.getMessage());
+            sendMessage(taskId, SystemMessage.error("代码执行失败: " + e.getMessage()));
+            throw e;
+        }
+
+        sendMessage(taskId, SystemMessage.success("代码执行完成，任务转交给论文手"));
 
         // Step 4: Writer Agent - Generate paper
-        sendMessage(taskId, SystemMessage.info("论文手准备开始撰写..."));
-        
-        // TODO: Implement WriterAgent
-        log.info("[Workflow] Writer agent execution - to be implemented");
+        sendMessage(taskId, SystemMessage.info("论文手开始撰写论文ing..."));
+
+        DashScopeChatModel writerModel = modelFactory.createWriterModel();
+        WriterAgent writerAgent = new WriterAgent(
+                taskId,
+                writerModel,
+                properties.getMaxChatTurns(),
+                promptLoader,
+                scholarService,
+                problem.getCompTemplate(),
+                problem.getFormatOutput()
+        );
+
+        String paper;
+        try {
+            paper = (String) writerAgent.run(coderResponse);
+            log.info("[Workflow] Writer completed. Paper length: {} characters", paper.length());
+        } catch (Exception e) {
+            log.error("[Workflow] Writer failed: {}", e.getMessage());
+            sendMessage(taskId, SystemMessage.error("论文撰写失败: " + e.getMessage()));
+            throw e;
+        }
+
+        // Save paper to file
+        try {
+            Path outputDir = workDir.resolve("output");
+            String extension = problem.getFormatOutput().getValue().equals("latex") ? ".tex" : ".md";
+            Path paperPath = outputDir.resolve("paper" + extension);
+            Files.writeString(paperPath, paper, StandardCharsets.UTF_8);
+            log.info("[Workflow] Paper saved to: {}", paperPath);
+            sendMessage(taskId, SystemMessage.success("论文已保存至: " + paperPath.getFileName()));
+        } catch (Exception e) {
+            log.error("[Workflow] Failed to save paper", e);
+            sendMessage(taskId, SystemMessage.warning("论文保存失败，但内容已生成"));
+        }
 
         // Final step
-        sendMessage(taskId, SystemMessage.success("工作流程完成！"));
-        log.info("[Workflow] Workflow completed for task: {}", taskId);
+        sendMessage(taskId, SystemMessage.success("✅ 工作流程全部完成！"));
+        log.info("[Workflow] Workflow completed successfully for task: {}", taskId);
     }
 
     /**

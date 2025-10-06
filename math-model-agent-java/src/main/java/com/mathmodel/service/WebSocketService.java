@@ -1,6 +1,5 @@
 package com.mathmodel.service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mathmodel.schema.response.SystemMessage;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
@@ -14,11 +13,9 @@ import org.springframework.stereotype.Service;
 public class WebSocketService {
 
     private final SimpMessagingTemplate messagingTemplate;
-    private final ObjectMapper objectMapper;
 
     public WebSocketService(SimpMessagingTemplate messagingTemplate) {
         this.messagingTemplate = messagingTemplate;
-        this.objectMapper = new ObjectMapper();
     }
 
     /**

@@ -1,7 +1,6 @@
 package com.mathmodel.core.workflow;
 
 import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatModel;
-import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatOptions;
 import com.mathmodel.config.MathModelProperties;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.model.ChatModel;
@@ -58,22 +57,14 @@ public class ModelFactory {
 
     /**
      * Create model with specific configuration
+     * Note: Returns the base model as Spring AI Alibaba ChatModel is auto-configured
+     * Model selection is controlled via chat options in the prompt
      */
     private DashScopeChatModel createModel(MathModelProperties.ModelConfig config) {
-        DashScopeChatOptions options = DashScopeChatOptions.builder()
-                .withModel(config.getModel())
-                .withTemperature(config.getTemperature())
-                .withMaxTokens(config.getMaxTokens())
-                .build();
-
-        // Clone the base model with new options
-        log.debug("Creating model with config: model={}, temperature={}, maxTokens={}", 
+        log.debug("Using model with config: model={}, temperature={}, maxTokens={}", 
                 config.getModel(), config.getTemperature(), config.getMaxTokens());
         
-        return new DashScopeChatModel(baseChatModel.getDefaultOptions().toBuilder()
-                .withModel(config.getModel())
-                .withTemperature(config.getTemperature())
-                .withMaxTokens(config.getMaxTokens())
-                .build());
+        // Return the base chat model - model/temperature will be set per request via ChatOptions
+        return baseChatModel;
     }
 }

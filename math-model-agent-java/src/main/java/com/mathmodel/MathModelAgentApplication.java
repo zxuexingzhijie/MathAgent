@@ -22,9 +22,8 @@ public class MathModelAgentApplication {
         printBanner();
         SpringApplication.run(MathModelAgentApplication.class, args);
         log.info("🎉 Math Model Agent started successfully!");
-        log.info("📖 GitHub: https://github.com/jihe520/MathModelAgent");
     }
-
+    
     private static void printBanner() {
         String banner = """
                 

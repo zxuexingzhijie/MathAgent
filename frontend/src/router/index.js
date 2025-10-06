@@ -14,6 +14,12 @@ const routes = [
     meta: { title: '对话' }
   },
   {
+    path: '/task/:taskId',
+    name: 'TaskDetail',
+    component: () => import('@/views/TaskDetailView.vue'),
+    meta: { title: '建模任务详情' }
+  },
+  {
     path: '/:pathMatch(.*)*',
     name: 'NotFound',
     redirect: '/'

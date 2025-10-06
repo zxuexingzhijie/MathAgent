@@ -41,7 +41,7 @@ public class ModelerAgent extends BaseAgent {
 
         // Call LLM
         ChatResponse response = chat();
-        String jsonStr = response.getResult().getOutput().getContent();
+        String jsonStr = response.getResult().getOutput().getText();
 
         // Clean JSON string
         jsonStr = cleanJsonString(jsonStr);
