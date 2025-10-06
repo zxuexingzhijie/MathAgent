@@ -1,8 +1,11 @@
 import { ref } from 'vue'
+import SockJS from 'sockjs-client'
+import { Stomp } from '@stomp/stompjs'
 
 class WebSocketService {
   constructor() {
-    this.ws = null
+    this.stompClient = null
+    this.subscription = null
     this.connected = ref(false)
     this.messages = ref([])
     this.reconnectAttempts = 0
@@ -11,47 +14,55 @@ class WebSocketService {
   }
 
   /**
-   * 连接 WebSocket
+   * 连接 WebSocket (使用 STOMP over SockJS)
    * @param {string} taskId - 任务ID
    */
   connect(taskId) {
-    const wsUrl = `ws://localhost:8080/api/ws/modeling/${taskId}`
+    const socketUrl = 'http://localhost:8080/api/ws'
     
     try {
-      this.ws = new WebSocket(wsUrl)
+      // 创建 SockJS 连接
+      const socket = new SockJS(socketUrl)
+      this.stompClient = Stomp.over(socket)
       
-      this.ws.onopen = () => {
-        console.log('WebSocket 连接成功')
-        this.connected.value = true
-        this.reconnectAttempts = 0
-      }
+      // 禁用调试输出(可选)
+      // this.stompClient.debug = () => {}
       
-      this.ws.onmessage = (event) => {
-        try {
-          const message = JSON.parse(event.data)
-          console.log('收到 WebSocket 消息:', message)
-          this.messages.value.push(message)
+      // 连接到 STOMP 服务器
+      this.stompClient.connect(
+        {},
+        (frame) => {
+          console.log('STOMP 连接成功:', frame)
+          this.connected.value = true
+          this.reconnectAttempts = 0
           
-          // 触发自定义事件
-          this.onMessage(message)
-        } catch (error) {
-          console.error('解析 WebSocket 消息失败:', error)
+          // 订阅任务专属主题
+          const destination = `/topic/task/${taskId}`
+          this.subscription = this.stompClient.subscribe(destination, (message) => {
+            try {
+              const parsedMessage = JSON.parse(message.body)
+              console.log('收到 WebSocket 消息:', parsedMessage)
+              this.messages.value.push(parsedMessage)
+              
+              // 触发自定义事件
+              this.onMessage(parsedMessage)
+            } catch (error) {
+              console.error('解析 WebSocket 消息失败:', error)
+            }
+          })
+          
+          console.log(`已订阅主题: ${destination}`)
+        },
+        (error) => {
+          console.error('STOMP 连接错误:', error)
+          this.connected.value = false
+          this.onError(error)
+          this.attemptReconnect(taskId)
         }
-      }
-      
-      this.ws.onerror = (error) => {
-        console.error('WebSocket 错误:', error)
-        this.onError(error)
-      }
-      
-      this.ws.onclose = () => {
-        console.log('WebSocket 连接关闭')
-        this.connected.value = false
-        this.attemptReconnect(taskId)
-      }
-      
+      )
     } catch (error) {
       console.error('创建 WebSocket 连接失败:', error)
+      this.attemptReconnect(taskId)
     }
   }
 
@@ -74,11 +85,11 @@ class WebSocketService {
   /**
    * 发送消息
    */
-  send(message) {
-    if (this.ws && this.ws.readyState === WebSocket.OPEN) {
-      this.ws.send(JSON.stringify(message))
+  send(destination, message) {
+    if (this.stompClient && this.stompClient.connected) {
+      this.stompClient.send(destination, {}, JSON.stringify(message))
     } else {
-      console.warn('WebSocket 未连接')
+      console.warn('STOMP 客户端未连接')
     }
   }
 
@@ -86,10 +97,19 @@ class WebSocketService {
    * 断开连接
    */
   disconnect() {
-    if (this.ws) {
-      this.ws.close()
-      this.ws = null
+    if (this.subscription) {
+      this.subscription.unsubscribe()
+      this.subscription = null
     }
+    
+    if (this.stompClient) {
+      this.stompClient.disconnect(() => {
+        console.log('STOMP 连接已断开')
+      })
+      this.stompClient = null
+    }
+    
+    this.connected.value = false
   }
 
   /**
@@ -107,4 +127,5 @@ class WebSocketService {
   }
 }
 
+// 导出单例
 export default new WebSocketService()

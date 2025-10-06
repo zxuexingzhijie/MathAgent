@@ -20,10 +20,9 @@
 
       <el-form-item label="竞赛模板" prop="compTemplate">
         <el-select v-model="form.compTemplate" placeholder="请选择竞赛模板" style="width: 100%">
-          <el-option label="中国赛" value="CHINA" />
-          <el-option label="美国赛" value="USA" />
-          <el-option label="国际赛" value="GLOBAL" />
-          <el-option label="通用" value="GENERAL" />
+          <el-option label="中国数学建模竞赛" value="CHINA" />
+          <el-option label="美国大学生数学建模竞赛" value="USA" />
+          <el-option label="自定义模板" value="CUSTOM" />
         </el-select>
       </el-form-item>
 
