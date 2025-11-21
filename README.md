@@ -1,5 +1,5 @@
 # 数学建模DeepResearch Agent
-
+### QQ交流群（827692832）
 基于Spring AI Alibaba Graph框架和Vue.js的智能数学建模研究系统，集成Multi-Agents和Code Interpreter。
 
 ![image](./image/系统架构图.png)
